@@ -1,0 +1,169 @@
+# Chapter2 {#wk2}
+
+## Reading Assignment
+
+### Directories and R Projects
+
+
+### Packages
+
+#### What are packages
+
+#### Installing packages
+github versus CRAN
+
+#### load packages
+library, require, versus unloaded (not in working session)
+
+
+### R Markdown
+You can make a hyperlink like this:
+`[text to show](http://the-web-page.com)`.
+
+You can include an image file like this: `![caption](http://url/for/file)`
+
+You can do subscripts (e.g., F~2~) with `F~2~` and superscripts (e.g.,
+F^2^) with `F^2^`.
+
+If you know how to write equations in
+[LaTeX](http://www.latex-project.org/), you can use `$ $` and `$$ $$` to insert math equations, like
+`$E = mc^2$` and
+
+```
+$$y = \mu + \sum_{i=1}^p \beta_i x_i + \epsilon$$
+```
+
+You can review Markdown syntax by navigating to the
+"Markdown Quick Reference" under the "Help" field in the
+toolbar at the top of RStudio.
+
+## R code chunks
+
+The real power of Markdown comes from mixing markdown with chunks of code. This is R Markdown. When processed, the R code will be executed; if they produce figures, the figures will be inserted in the final document.
+
+The main code chunks look like this:
+
+<pre>
+&#96;&#96;&#96;{r load_data}
+gapminder <- read.csv("gapminder.csv")
+&#96;&#96;&#96;
+</pre>
+
+That is, you place a chunk of R code between <code>&#96;&#96;&#96;{r chunk_name}</code>
+and <code>&#96;&#96;&#96;</code>. You should give each chunk
+a unique name, as they will help you to fix errors and, if any graphs are produced, the file names are based on the name of the code chunk that produced them.
+
+> ## Challenge 2
+>
+> Add code chunks to:
+>
+> * Load the ggplot2 package
+> * Read the gapminder data
+> * Create a plot
+>
+> > ## Solution to Challenge 2
+> >
+> > <pre>
+> > &#96;&#96;&#96;{r load-ggplot2}
+> > library("ggplot2")
+> > &#96;&#96;&#96;
+> > </pre>
+> >
+> > <pre>
+> > &#96;&#96;&#96;{r read-gapminder-data}
+> > gapminder <- read.csv("gapminder.csv")
+> > &#96;&#96;&#96;
+> > </pre>
+> >
+> > <pre>
+> > &#96;&#96;&#96;{r make-plot}
+> > plot(lifeExp ~ year, data = gapminder)
+> > &#96;&#96;&#96;
+> > </pre>
+> >
+
+## How things get compiled
+
+When you press the "Knit" button, the R Markdown document is
+processed by [`knitr`](http://yihui.name/knitr) and a plain Markdown document is produced (as well as, potentially, a set of figure files): the R code is executed and replaced by both the input and the output; if figures are produced, links to those figures are included.
+
+The Markdown and figure documents are then processed by the tool [`pandoc`](http://pandoc.org/), which converts the Markdown file into an html file, with the figures embedded.
+
+```{r rmd_to_html_fig, fig.width=8, fig.height=3, fig.align="left", echo=FALSE}
+par(mar=rep(0, 4), bty="n", cex=1.5)
+plot(0, 0, type="n", xlab="", ylab="", xaxt="n", yaxt="n",
+     xlim=c(0, 100), ylim=c(0, 100))
+xw <- 10
+yh <- 35
+xm <- 12
+ym <- 50
+rect(xm-xw/2, ym-yh/2, xm+xw/2, ym+yh/2, lwd=2)
+text(xm, ym, ".Rmd")
+
+xm <- 50
+ym <- 80
+rect(xm-xw/2, ym-yh/2, xm+xw/2, ym+yh/2, lwd=2)
+text(xm, ym, ".md")
+xm <- 50; ym <- 25
+for(i in c(2, 0, -2))
+    rect(xm-xw/2+i, ym-yh/2+i, xm+xw/2+i, ym+yh/2+i, lwd=2,
+         border="black", col="white")
+text(xm-2, ym-2, "figs/")
+
+xm <- 100-12
+ym <- 50
+rect(xm-xw/2, ym-yh/2, xm+xw/2, ym+yh/2, lwd=2)
+text(xm, ym, ".html")
+
+arrows(22, 50, 38, 50, lwd=2, col="slateblue", len=0.1)
+text((22+38)/2, 60, "knitr", col="darkslateblue", cex=1.3)
+
+arrows(62, 50, 78, 50, lwd=2, col="slateblue", len=0.1)
+text((62+78)/2, 60, "pandoc", col="darkslateblue", cex=1.3)
+```
+
+
+
+### Tibbles
+Many ways to view the tibble
+
+
+
+## Lecture Code
+Will be uploaded after the lecture
+
+
+## References 
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc. 
+* [Chapter 8: Projects](https://r4ds.had.co.nz/workflow-projects.html)
+* [Chapter 27: R Markdown](https://r4ds.had.co.nz/r-markdown.html)
+* [Chapter 10: Tibble](https://r4ds.had.co.nz/tibbles.html)
+[Producing Reports With knitr](http://swcarpentry.github.io/r-novice-gapminder/15-knitr-markdown/index.html)
+
+## Lab
+
+## Homework Assignment  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+## A bit more Markdown
+
+
+
+
