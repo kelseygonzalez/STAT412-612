@@ -1,0 +1,63 @@
+---
+title: 'STAT 412/612 Class 1: Installing R & Rstudio'
+author: "Kelsey Gonzalez"
+date: "1/21/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+    toc: true
+    number_sections:  true
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{images/AU-Logo-on-white-small.png}}
+- \fancyhead[L]{Week1}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+bibliography: 412.bib
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+
+# Installing R 
+R is a programming language used to conduct statistical analyses (and much more!)
+
+- Windows
+
+1. Go to (https://cran.rstudio.com/)[https://cran.rstudio.com/]
+2. In the "Download and Install R" Box near the top of your screen, click your computing environment
+3. Click `Base`
+4. Click `Download R 4.0.3 for Windows` near the top of your screen
+5. Open the `.exe` installer and proceed to install onto your computer
+
+- Mac
+
+1. Go to (https://cran.rstudio.com/)[https://cran.rstudio.com/]
+2. In the "Download and Install R" Box near the top of your screen, click your computing environment
+3. Click "R-4.0.3.pkg (notarized and signed)" near the left of your screen. 
+4. Open the `.pkg` and and proceed to install onto your computer
+
+- Linux 
+1. You can download the binary files for your distribution from CRAN at (https://cran.rstudio.com/)[https://cran.rstudio.com/] or you can use your package manager (e.g. for Debian/Ubuntu run sudo apt-get install r-base and for Fedora run sudo dnf install R). Also, please install the RStudio IDE.
+
+\newpage
+# Installing Rstudio 
+RStudio is an application (an integrated development environment or IDE) that facilitates the use of R and offers a number of nice additional features. It can be downloaded here. You will need the free Desktop version for your computer.
+
+1. Go to (https://rstudio.com/products/rstudio/download/)[https://rstudio.com/products/rstudio/download/]
+2. Under "RStudio Desktop - Open Source License" (The leftmost column), click "download"
+3. Step two contains the best rstudio version for your computer. Click! 
+4. Proceed with your install by opening the `.exe` or `.pkg`
+
+Note: Linux users may follow directions [https://rstudio.com/products/rstudio/download-server/debian-ubuntu/](here)

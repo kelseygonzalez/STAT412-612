@@ -1,6 +1,29 @@
 h1:part-data-types (PART) Data Types
 h1:stringr Working with Strings and Regular Expressions
 h2:lecture-notes Lecture Notes
+h3:strings Strings
+h3:stringr-intro stringr Intro
+h4:combining-strings-with-str_c Combining Strings with 
+h4:extracting-substrings-with-str_sub Extracting substrings with ,
+h5:exercise :
+h3:regular-expressions Regular Expressions
+h4:intro Intro
+h4:regex-using-period-.-and-backslash-in-str_replace_all Regex using period  and backslash  in 
+h5:exercises :
+h4:anchoring-the-regex-so-search-starts-at-the-beginning-or-at-the-end-of-a-string Anchoring the regex so search starts at the beginning or at the end of a string
+h5:exercise-1 :
+h4:special-characters Special Characters
+h5:exercise-2 :
+h4:repetition-using-n-n0n-nm Repetition using , , , , ,, 
+h5:exercise-3 :
+h4:grouping-and-backreferences Grouping and Backreferences
+h3:stringr-has-functions-to-do-more-than-replace  has functions to do more than replace
+h4:changing-case Changing Case
+h4:detecting-matches Detecting matches
+h4:get-all-johns-and-joes-from-the-lahman-dataset Get all John’s and Joe’s from the Lahman dataset
+h4:counting-matches Counting Matches
+h4:extracting-matches Extracting Matches
+h4:splitting-strings-or-replacing-strings Splitting Strings or Replacing Strings
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

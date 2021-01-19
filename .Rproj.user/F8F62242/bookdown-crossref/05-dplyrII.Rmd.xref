@@ -1,5 +1,32 @@
 h1:dplyrII Data Transformation with dplyr II
 h2:lecture-notes Lecture Notes
+h1:introduction Introduction
+h1:row-wise-operations-with-rowwise Row-wise operations with 
+h2:creating-row-wise-data-frames Creating row-wise data frames
+h2:per-row-summary-statistics Per-row Summary Statistics
+h2:row-wise-summary-functions Row-wise Summary Functions
+h3:exercise Exercise
+h1:column-wise-operations-with-across Column-wise operations with 
+h2:basic-usage-of-across Basic Usage of 
+h2:using-across-with-summarize Using  with 
+h1:summarize-all-rows summarize all rows
+h2:using-across-with-multiple-functions Using  with Multiple Functions
+h2:gotchas---order-matters Gotchas - Order Matters
+h2:other-verbs Other Verbs
+h2:why-acrossis-replacing-the-dplyr-functions-using-_if-_at-and-_all Why is Replacing the dplyr Functions using , , and 
+h3:exercise-1 Exercise
+h1:other-useful-dplyr-functions Other Useful dplyr Functions
+h2:case_when 
+h2:tibblerownames_to_columns 
+h3:exercise-2 Exercise
+h2:distinct 
+h1:programming-with-dplyr-advanced Programming with dplyr (Advanced)
+h2:data-masking Data Masking
+h3:data--and-env-variables Data- and env-variables
+h3:indirection Indirection
+h2:tidy-selection Tidy selection
+h3:indirection-1 Indirection
+h2:bottom-line Bottom Line
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

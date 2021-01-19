@@ -1,0 +1,579 @@
+---
+title: 'STAT 412/612 Class 22: Iteration with Loops and Purrr'
+author: "Kelsey Gonzalez"
+date: "4/12/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+![](images/monster_for_loop.png)
+![](images/purrr_cat.png)
+# Loops and Purrr {#purrr}
+Learning Outcomes
+
+- Apply techniques of iteration to reduce and simplify your code.
+  + For-Loops
+  + `map*()` functions from the tidyverse package `purrr`
+  
+
+### For-Loops in Base R
+
+#### Motivation
+
+- *Iteration* is the repetition of some amount of code.
+
+- If we didn't know the `sum()` function, how would we add up the elements of a vector?
+  
+    ```{r}
+    x <- c(8, 1, 3, 1, 3)
+    ```
+  
+- We could manually add the elements.
+    ```{r}
+    x[1] + x[2] + x[3] + x[4] + x[5]
+    ```
+
+  + But this is prone to error (especially if we try to copy and paste multiple lines). Also, what if `x` has 10,000 elements?
+
+- `For` loops to the rescue!  Here is an example:
+    ```{r}
+    x
+    sumval <- 0
+    for (i in seq_along(x)) {
+       sumval <- sumval + x[[i]]
+    }
+    sumval
+    ```
+
+#### For-Loop Structure
+
+- For-loops are a standard means in multiple computer languages for iterating (repeating) sections of code for a specified number of iterations (repetitions) 
+
+- Each for-loop contains the following elements:
+
+  1. **Condition**: This sets the number of iterations. It sets the values by which the loops will be sequenced (often by 1) and defines the variable by which the loops will be counted, normally variables such as `i`, `j`, or `k`.
+    + In the example above, the function `seq_along(x)` is a special version of `seq` which creates a vector from 1 to the length of `x`, incremented by  1 (so `1, 2, 3, 4, 5`), and the variable `i` will contain each successive value from the vector as the loop iterates.  
+  2. **Body**: This is the expression or code between the curly braces `{}`. This is the code will be evaluated each iteration with the new value of `i` for that iteration.
+  3. **Output**: The variable that is produced by the iteration. This is `sumval` above. 
+    + It's best to allocate the memory for the output *before* starting the for-loop.  
+
+- In the above sequence, R internally transforms the code to:
+
+    ```{r}
+    sumval <- 0
+    sumval <- sumval + x[[1]]
+    sumval <- sumval + x[[2]]
+    sumval <- sumval + x[[3]]
+    sumval <- sumval + x[[4]]
+    sumval <- sumval + x[[5]]
+    sumval
+    ```
+- There are four variations on the basic theme of the for loop:
+  + *Modifying an existing object*, instead of creating a new object.
+  + *Looping over names or values*, instead of indices.
+  + *Handling outputs of unknown length*.
+  + *Handling sequences of unknown length*.
+
+- Filling a new vector with values. 
+  + Create the new vector beforehand using the `vector()` function by specifying the type (mode) of the elements and the number of elements you need. 
+    + Allocating memory is slow so it is faster to do it once before the loop than to add more memory with each iteration of the loop.
+    + Look at help for `vector()` and `seq_along()`
+
+- For example, let's calculate a vector of the cumulative sums each element in `x`.
+    ```{r}
+    # Allocate the memory in a new variable
+    cumvec <- vector(mode = "double", length = length(x))
+    cumvec
+    
+    # start the for-loop
+    for (i in seq_along(cumvec)) {
+       if (i == 1) {
+         cumvec[[i]] <- x[[i]]
+       } else {
+         cumvec[[i]] <- cumvec[[i - 1]] + x[[i]] 
+       }
+    }
+    cumvec
+    
+    ## Same result as cumsum(x)
+    cumsum(x)
+    ```
+  
+##### Group Exercise
+
+1. The first two numbers of the [Fibonacci Sequence](https://en.wikipedia.org/wiki/Fibonacci_number) are 0 and 1. Each succeeding number is the sum of the previous two numbers in the sequence. For example, the third element is 1 = 0 + 1, while the fourth elements is 2 = 1 + 1, and the fifth element is 3 = 2 + 1. 
+
+- Use a for loop to calculate the first 100 Fibonacci Numbers. Sanity Check: The $\log_2$ of the 100^th^ Fibonacci Number is about 67.57.
+- Design your steps - there are two alternatives: Set the first two values inside the loop or set them outside the loop
+  1. Initialize an empty vector of the desired length to hold your numbers
+  2. If you initialize outside the loop,  do it now
+  3. Create your for loop to iterate as many times as you need 
+  4. Create the logic to compute the numbers
+  
+    ```{r,  }
+    fibvec <- vector(mode = "double", length = 100)
+    for (i in seq_along(fibvec)) {
+      if (i > 2) {
+        fibvec[[i]] <- fibvec[[i - 1]] + fibvec[[i - 2]]
+      } else if (i == 1) {
+        fibvec[[i]] <- 0 
+      } else if (i == 2) {
+        fibvec[[i]] <- 1
+      } else {
+        stop(paste0("i = ", i))
+      }
+    }
+    
+    # Test the results
+    head(fibvec, n = 10)
+    log2(fibvec[100])
+    
+    fibvec <- vector(mode = "double", length = 100)
+    # initialize outside the loop
+    fibvec[1:2] <- c(0,1)
+    # run the loop skipping the first two numbers
+    for (i in seq(from = 3, to =length(fibvec))) {
+        fibvec[[i]] <- fibvec[[i - 1]] + fibvec[[i - 2]]
+    }
+    
+    # Test the results
+    head(fibvec, n = 10)
+    log2(fibvec[100])
+    ```
+  
+#### Looping Over the Columns of a data frame. 
+
+- Note: for a data frame `df`, `seq_along(df)` is the same as `1:ncol(df)` which is the same as `1:length(df)` (since data frames are special cases of lists).
+
+- Let's calculate the mean of each column of `mtcars`
+    ```{r}
+    data("mtcars")
+    mean_vec <- vector(mode = "numeric", length = length(mtcars))
+    for (i in seq_along(mtcars)) {
+      mean_vec[[i]] <- mean(mtcars[[i]], na.rm = TRUE)   
+    }
+    mean_vec
+    colMeans(mtcars)
+    ```
+    
+- Why not just use `colMeans()`? Well, there is no "`colSDs`" function, so iteration used to be important for applying non-implemented functions to multiple elements in R.
+  
+    ```{r}
+    sd_vec <- vector(mode = "numeric", length = length(mtcars))
+    for (i in seq_along(mtcars)) {
+      sd_vec[[i]] <- sd(mtcars[[i]], na.rm = TRUE)   
+    }
+    sd_vec
+    ```
+  
+  
+- Good News! With dplyr 1.0 we can now use `across()` for many functions.
+- Let's load the tidyverse and make sure you have dplyr version 1.0 or greater
+
+    ```{r, message=FALSE}
+    library(tidyverse)
+    ```
+
+- Look at help for `across()` or the [Column-wise vignette](https://dplyr.tidyverse.org/articles/colwise.html) to learn about a great new function in the tidyverse (along with `rowwise()`)
+- Use inside `summarize() ` and `mutate()`
+
+    ```{r}
+    data(mtcars)
+    mtcars %>% 
+    #  group_by(cyl) %>% 
+      summarize(across(where(is.numeric),sd),.groups = "keep")
+    ```
+
+- So, you no longer need write a for-loop to do complex summaries of columns, but there are many times when iteration is the best approach to accomplish a desired transformation of the data.
+
+##### Exercise
+
+1. Use a for-loop to calculate the standard deviation of each plant trait in the `iris` data frame.  
+- Repeat using `across()` (using `where()` to limit to numeric columns)
+  
+    ```{r,  }
+    data("iris")
+    sdvec <- rep(NA, length = 4)
+    for (i in seq_along(sdvec)) {
+      sdvec[i] <- sd(iris[[i]], na.rm = TRUE) 
+    }
+    sdvec
+    
+    iris %>% 
+      summarize(across(where(is.numeric), sd))
+    ```
+  
+#### The `while()` function as an alternative
+
+- Sometimes you don’t know how many times to repeat the code block as it may depend upon the results of the loop. 
+  + you might want to loop until you get three heads in a row in a simulation, or, 
+  + you might want to loop until the difference between two values is below or above some threshold. 
+- You can’t do that sort of iteration with the for-loop. Instead, use a while-loop. 
+- A while loop is simpler than for loop because it only has **two components, a condition and a body**
+
+    ```{r, eval = FALSE}
+    while (condition) {
+      # body
+    }
+    ```
+- A while-loop is also more general than a for-loop, because you can rewrite any for-loop as a while-loop, but you can’t rewrite every while-loop as a for-loop.
+
+- Example: using a while-loop to find how many tries it takes to get three heads in a row:
+    ```{r}
+    set.seed(1)
+    flip <- function() sample(c("T", "H"), 1)
+    
+    flips <- 0
+    nheads <- 0
+    
+    while (nheads < 3) {
+      if (flip() == "H") {
+        nheads <- nheads + 1
+      } else {
+        nheads <- 0 #start over
+      } # end else
+      flips <- flips + 1 
+    } # end while loop
+    flips
+    ```
+
+
+
+### Using the `purrr` package for iteration
+
+#### Intro to the purrr package
+
+- R is a functional programming language, i.e., you can pass functions to functions.
+  
+- Suppose for the `mtcars` data frame, we want to calculate the column-wise mean, the column-wise median, the column-wise standard deviation, the column-wise maximum, the column-wise minimum, and the column-wise [MAD](https://en.wikipedia.org/wiki/Median_absolute_deviation). 
+- The for-loop would look very similar for each function `fun` as in this non-executable example.
+  
+    ```{r, eval=FALSE}
+    # Dummy Code with a generic "fun()" function
+    funvec <- rep(NA, length = length(mtcars))
+    for (i in seq_along(funvec)) {
+      funvec[i] <- fun(mtcars[[i]], na.rm = TRUE) 
+    }
+    funvec
+    ```
+    
+- Ideally, we would like to just tell R what function to apply to each column of `mtcars`. 
+- This is exactly what the purrr package allows us to do: 
+- purrr allows us to identify *a set of data* and then *a function* to be applied to that data.
+  
+- `purrr` is a part of the tidyverse so does not need to be loaded separately.
+
+#### The `purrr` map functions  
+- The purrr functions that start with `map` (known as the `map*()` functions) each use the same three arguments
+    1. **`.x`**: an input set of data with multiple elements. `.x` can be a vector, a list, or a data frame. 
+    2. **`.f`**: a function you want applied to each of the elements of the `.x` data structure.
+      + The functions can come in several varieties:  
+        a. **a named function from Base R or an R package* present in the global environment or accessible using `package::function()`  
+        b. **a named function you wrote** that is present in the environment (has been sourced)
+        c. an unnamed or **"[anonymous function](https://adv-r.hadley.nz/functions.html#)"** you define inside the map function
+        d. **a formula using `~`** you defined inside the map function
+          + The formula uses `.` for a single argument, 
+          + `.x` and `.y` for a function with two arguments, and,
+          +`..1, ..2, ..3, etc.` for functions with multiple arguments
+    3. **`...`**: a placeholder for additional arguments that might be needed by the `.f` function
+
+- The `map*()` functions break out the `.x` data structure into its top level elements and pass them, one at a time, as input to the `.f` function, and for the i^th^ element, return the output of `.f(.x[i], ...)` as the i^th^ element of the designated output structure (so the output has the same number of elements as `.x` but may be of a different type). 
+  + A `.x` vector becomes the individual elements of the vector `.x[1], .x[2], ...`
+  + A `.x` data frame becomes the individual columns of the data frame, `df[,1], df[,2], ...`
+  + A `.x` list becomes the individual elements of the list, which could be their own individual values, vectors, data frames or lists.
+
+  
+- The several variants of the `map_*` function return different kinds of output.
+  - `map()` returns a *list*.
+  - `map_lgl()` returns a *logical vector*.
+  - `map_int()` returns an *integer vector*.
+  - `map_dbl()` returns a *double vector*.
+  - `map_chr()` returns a *character vector*.
+  
+    ```{r, eval = FALSE}
+    # .x is mtcars, a data frame so it breaks out into columns
+    # .f is the function below which is applied to each column of mtcars
+    map_dbl(mtcars, mean)
+    map_dbl(mtcars, median)
+    map_dbl(mtcars, sd)
+    map_dbl(mtcars, mad)
+    map_dbl(mtcars, min)
+    map_dbl(mtcars, max)
+    ```
+  
+- By using the `...` argument, you can pass on more arguments to `map_*()` so they can be passed to the `.f` function.
+
+    ```{r, eval = FALSE}
+    map_dbl(mtcars, mean, na.rm = TRUE)
+    # equivalent to mean(mtcars[,i], na.rm = TRUE) for each of i columns
+    ```
+
+- Suppose you want to get the output of `summary()` on each column.
+    ```{r, eval = FALSE}
+    map(mtcars, summary)
+    ```
+
+##### Exercise
+
+- Write code using one of the map functions to:  
+  1. Determine the type of each column in `nycflights13::flights.`
+  2. Compute the number of unique values in each column of `iris`.
+  3. Generate 10 random normals for each of $\mu = -10, 0, 10, \ldots, 100$.
+- Repeat 1 and 2 using `across()` without using `map*()`
+    
+    ```{r,  }
+    library(nycflights13)
+    data("flights")
+    data("iris")
+    
+    map_chr(flights, typeof)
+    map_int(iris, function(x) length(unique(x)))
+    map_dfc(seq(-10, 100, by = 10), rnorm, n = 10) ->
+      temp
+    temp
+    
+    # summarize(flights, across(,typeof))
+    # iris %>% summarize(across(,~length(unique(.))))
+    
+    ```
+
+
+#### Why Use purrr?
+
+- The chief benefit of using `map*()` functions instead of for loops is clarity, not speed; they can make your code easier to write and to read.
+  + The coder's focus is on the operation being performed (e.g., `mean()`), not the bookkeeping required to create an output vector, set conditions, loop over every element, and then store the iterated output. 
+  - `purr()` functions have consistent names and arguments and work well with other tidyverse functions including `%>%`.
+  + If `across()` works for your situation, it may be even better, but it does not always fit the situation
+  
+- Base R has functions like `lapply()` and `sapply()` which also iterate across variables.
+- `lapply()` is basically identical to `map()`, except `map()` is consistent with all the other functions in purrr, and you can use the shortcuts for `.f`.
+
+
+#### Using Formula Style for `.f` as a Shortcut around Anonymous Functions
+
+- Defining the `.f` using formula style requires preceding the name of the `.f` argument with a "`~`".  
+- Then, you can refer to elements of the `.x` input by `.` in a `map*()` call. 
+- For example, the following are three equivalent ways to calculate the mean of each column in `mtcars`.
+  
+    ```{r, eval = FALSE}
+    map_dbl(mtcars, mean) # using a named function - mean
+    map_dbl(mtcars, function(.) mean(.)) # an "anonymous" function, it has  no name
+    map_dbl(mtcars, ~mean(.)) # using a formula style function with ~
+    ```
+    
+- What is actually going on is that purrr is creating an anonymous function based on the formula behind the scenes
+
+    ```{r, eval = FALSE}
+    .f <- function(.) {
+      mean(.)
+    }
+    ```
+
+- and then calling this function in `map()`.
+
+    ```{r, eval = FALSE}
+    map_dbl(mtcars, .f)
+    ```
+  
+
+- Why is this useful? Consider the following chunk of code which allows us to fit many simple linear regression models:
+
+    ```{r}
+    mtcars %>% 
+      split(.$cyl) %>% 
+      map(function(df) lm(mpg ~ wt, data = df)) ->
+      lmlist
+    ```
+      
+  + `split(.$cyl)` is a base R function to turn a data frame into a *list of data frames* where each data frame has a different value of `cyl` for all units. 
+    + The "`.`" in `split` references the current data frame (since `split()` is not tidyverse).  
+  + `function(df) lm(mpg ~ wt, data = df)` defines an "*anonymous function*" that will fit a linear model of `mpg` on `wt` where those variables are in the data frame `df`  passed to it (by `map()`) as an input argument.
+  + Thus, the `map()` call fits a linear model to each of the three data frames in the list created by `split()`.
+  + It returns as output *a list of three `lm` objects* you can use to get fitted values and summaries.
+      
+    ```{r}
+    summary(lmlist[[1]])
+    ```
+    
+- Again, to avoid creating the "anonymous function" `function(df) lm(mpg ~ wt, data = df)`, purrr allows you to use a **one-sided formula** to do the same thing:
+  
+    ```{r}
+    mtcars %>% 
+      split(.$cyl) %>% 
+      map(~lm(mpg ~ wt, data = .)) ->
+      lmlist
+    ```
+  
+  + Here, the "`.`" in "`data = .`" serves as a "pronoun". 
+  + Like the `i` in a loop, **the `.` references the current data frame** from the list of three data frames we are iterating through.
+  
+- Since the output of `map()` is a list, we can use `map()` to generate a list with the `summary()` for each linear model object.
+    ```{r}
+    lmlist %>%
+      map(summary) ->
+      sumlist
+    # or
+    map(lmlist, summary)-> sumlist2
+    #View(sumlist)
+    ```
+
+- If you want to extract the $R^2$ from sumlist, you can use formula style.
+
+    ```{r}
+    sumlist[[1]]$r.squared ## only gets one R^2 out.
+    
+    ## Gets all R^2 out
+    sumlist %>%
+      map(~.$r.squared) # extracts a list
+    # or
+    map(sumlist, ~.$r.squared) 
+    # the second . is part of the element name in the list
+```
+
+- Extracting named components is a common operation, so purrr provides an even shorter shortcut: you can use a string.
+    ```{r}
+    # or
+    sumlist %>%
+      map_dbl("r.squared") #extracts a vector
+    sumlist %>% 
+      map("fstatistic")    #extracts a list
+    ```
+- You can also use an integer to select elements by position:
+
+    ```{r}
+     sumlist %>%
+          map_dbl(8) #extracts a vector
+    #sumlist %>%
+    #      map_dbl(10) #errors out - why? 
+    #      # element 10 is not of length 1
+    #      # have to use map()
+    ```
+
+  
+##### Exercise
+
+1. We often use a [$t$-test](https://en.wikipedia.org/wiki/Student%27s_t-test) to test if differences in population means are "real". R implements this with `t.test()`.  
+- For example, to test for differences between the mean `mpg` of automatics and manuals (coded in variable `am`), we would use the following syntax.
+  
+    ```{r, eval = FALSE}
+    t.test(mpg ~ am, data = mtcars)$p.value
+    ```
+    
+- Use `map()` to get the $p$-value for this test within each group of `cyl`.
+    
+    ```{r,  }
+    mtcars %>%
+      split(.$cyl) %>%
+      map(~t.test(mpg ~ am, data = .)) %>%
+      map(~.$p.value)
+    ```
+
+#### `map2()` and `pmap()` allow mapping over multiple arguments in parallel
+
+- If you have multiple related inputs you need to iterate along **in parallel,** that’s the job of the `map2()` and `pmap()` functions. 
+- Example: you want to simulate five random normals from three Normal distributions with *different means and variances*. 
+- You could iterate over the indices of the inputs using `seq_along()` and index into vectors of means and standard deviations:
+    ```{r}
+    # N(1,1), N(100,5), N(-10, 20)
+    mu <- list(1, 100, -10)
+    sigma <- list(1, 5, 20)
+    set.seed(1)
+    
+    seq_along(mu) %>% 
+      map(~rnorm(5, mu[[.]], sigma[[.]])) %>% 
+      str()
+    ```
+
+- That can be confusing code to read, so `purrr` provides the function `map2()`
+- `map2()` has arguments for  `.x` and `.y`
+    ```{r}
+    # N(1,1), N(100,5), N(-10, 20)
+    mu <- list(1, 100, -10)
+    sigma <- list(1, 5, 20)
+    set.seed(1)
+    
+    map2(mu, sigma, rnorm, n = 5) %>% str()
+    ```
+
+- When you have multiple vectors to iterate over, `purrr::pmap()` handles more than two vectors.
+- Suppose we want a different number of samples from the three distributions
+- We create a list of our arguments: Three distributions and three arguments for each distribution
+- That becomes our the `.l` argument (instead of `.x`)
+    ```{r}
+    n <- list(20, 30, 50) # the number of samples for the three N(mu,sigma)
+    args_list <- list(n=n, mean = mu, sd = sigma)
+    str(args_list)
+
+        args_list %>%
+      pmap(rnorm) %>% 
+      str()
+    ```
+
+### Other Purrr Functions
+
+#### `keep()` and `discard()` Select with Logicals
+
+- `keep()` selects all variables that return `TRUE` according to a function you choose or define.
+  + similar in concept to `filter()`
+
+- Example: let's keep all numeric variables and calculate their means in the `iris`
+  data frame.
+
+    ```{r}
+    iris %>%
+      keep(is.numeric) %>%
+      map_dbl(mean)
+    ```
+    
+- `discard()` will select all variables that return `FALSE` according to some   function.
+  
+- Let's count the number of each species using `table()`.
+
+    ```{r}
+    iris %>%
+      discard(is.numeric) %>%
+      map(table)
+    ```
+
+- Other less useful functions are available in Section 21.9 of  [RDS](https://r4ds.had.co.nz/).
+
+
+##### Exercise
+
+1. In the `mtcars` data frame, use only three lines of code to keep only variables that have a mean greater than `10` and calculate their mean.  
+  + Hint: You'll have to use some of the shortcuts above. You should wind up with four variables. 
+  
+    ```{r,  }
+    mtcars %>%
+      keep(~mean(.) > 10) %>%
+      map(mean)
+    ```
+
+
+## References 
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc. 
+* [Chapter 8: Projects](https://r4ds.had.co.nz/workflow-projects.html)
+* [Chapter 27: R Markdown](https://r4ds.had.co.nz/r-markdown.html)

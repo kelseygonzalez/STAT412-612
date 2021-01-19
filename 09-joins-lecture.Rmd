@@ -1,0 +1,537 @@
+---
+title: 'STAT 412/612 Class 14: Relational Data and joins'
+author: "Kelsey Gonzalez"
+date: "3/15/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+
+# Relational Data and joins
+Learning Outcomes
+
+- Describe relational data.
+- Use the correct R tidyverse function to manipulate data: 
+  + `inner_join()`, 
+  + `left_join()`, 
+  + `right_join()`, 
+  + `full_join()`, 
+  + `semi_join()`, 
+  + `anti_join()`.
+  
+### Relational Data
+
+- Load the tidyverse
+
+    ```{r, message = FALSE}
+    library(tidyverse)
+    ```
+
+- Many datasets (especially those drawn from relational databases) have more than two data frames.
+- These data frames are often *logically related* where rows in one data frame correspond to, or, *have a relation to*, rows in another data frame.
+- Large Relational Databases are typically designed (by data engineers) to achieve some level of "normalization" 
+- The goal of normalization is to design the set of tables (data frames) to capture all of the data while achieving a balance across:
+  + storage size, 
+  + query speed, 
+  + ease of maintenance by users, and 
+  + minimal delays for distributed operations with multiple users. 
+- Table design strives to:
+  + reduce data duplication (which increases storage and the potential for errors), and
+  + enable multiple users to update their tables without interference from other users.
+- A principle of normalization is to *limit tables to a single purpose.*
+- As R users, we might say, a table (dataframe) describes one type of (observational or experimental) unit, with all the observations for each *variable associated with that unit and only that unit*. 
+- In modern databases, you may run into tables containing blob objects such as pictures, figures, or movies
+  + You may need to work with the database administrator to get only the data you need into R.
+
+#### Example: The NYC Flights Data Set Actually has Multiple Tables 
+
+- Consider the tables/data frames in the [nycflights13](https://github.com/hadley/nycflights13) package.
+    ```{r}
+    library(nycflights13)
+    ```
+- Use the `data(package = "package-name")` to see the data sets in a package
+    ```{r}
+    data(package = "nycflights13")
+    data(package = "babynames")
+    ```
+
+##### Each Table has One Purpose: To Describe One Type of Unit
+- `airlines`: Airline names.
+    ```{r}
+    data("airlines")
+    head(airlines)
+    ```
+    
+- `airports`: Airport metadata
+    ```{r}
+    data("airports")
+    head(airports)
+    ```
+        
+- `planes`: Plane metadata.
+    ```{r}
+    data("planes")
+    head(planes)
+    ```
+        
+- `weather`: Hourly weather data
+    ```{r}
+    data("weather")
+        head(weather)
+    ```
+        
+- `flights`: Flights data
+    ```{r}
+    data("flights")
+    head(flights)
+    ```
+
+##### These Tables are Logically Connected
+- Fields in one table "relate" to fields in one or more other tables
+
+![](./graphics/relational-nycflights.png)\ 
+
+
+- For nycflights13:
+  + `flights` connects to `planes` via a single variable, `tailnum`.
+  + `flights` connects to `airlines` through the `carrier` variable.
+  + `flights` connects to `airports` in two ways: via the `origin` and `dest` variables.
+  + `flights` connects to `weather` via `origin` (the location), and `year`, `month`, `day` and `hour` (the time).
+    
+### We Define Variables as "Keys" to Identify Rows and to Make Logical Connections Between Tables.
+
+- Every Table should have a **Primary key** to uniquely identify (differentiate) its rows. 
+  + Keys must be unique in their own table, i,e., only refer to one instance of an item. 
+  + Good Data engineers create keys with no intrinsic meaning other than being a unique identifier. 
+  + Some tables may use a *combined key* based on multiple columns, e.g., year, month, day together.
+  + The primary key from one table may appear many times in other tables. 
+
+- *Example*: `planes$tailnum` is a primary key for `planes` because it uniquely identifies the rows in `planes`.
+- To check if you have identified the Primary Key fields, use `group_by(primary_key_fields)` and `count()` to see if there are multiple rows for any group.
+- If any group has more than one row, the fields are insufficient to serve as a primary key
+    ```{r}
+    planes %>%
+      group_by(tailnum) %>%
+      count() %>%
+      filter(freq > 1)
+    # type is Not a Primary Key
+    planes %>%
+      group_by(type) %>%
+      count() %>%
+      filter(freq > 1)
+    ```
+- A primary key can also serve as a foreign key when present in another table.
+- A **Foreign key** is used to identify rows in another (child) table.
+- *Example*: In `flights`, `$tailnum` is a foreign key for the other table `planes` because it uniquely identifies rows in `planes`. 
+- There can be multiple rows with the same foreign key in a table, e.g., `tailnum` in `flights`, so `flights$tailnum` is *not* a primary key in flights.
+
+    ```{r}
+    flights %>% 
+      group_by(tailnum) %>%
+      count() %>%
+      filter(freq > 1)
+    ```
+
+- *Example*: `weather$origin` is *part* of the primary key for `weather` (along with `year`, `month`, `day`, and `hour`) 
+- It is also a foreign key for `airports` (`weather$origin` is connected to `airports$faa`).
+- If a table lacks a simple primary key (like `flights`), you can add one with `dplyr::mutate()` and `row_number()`.
+- This new key is sometimes referred to as a *surrogate key*
+
+    ```{r, flights_pk}
+    flights %>% 
+      distinct() %>% 
+    nrow() - nrow(flights)
+    
+    flights %>% 
+      group_by(year, month, day, sched_dep_time, carrier, origin, flight) %>% 
+      count() %>% 
+      filter(freq>1)
+    
+    flights %>% 
+      #mutate(row = row_number(flights$flight)) %>% 
+      dplyr::mutate(row = row_number()) %>%
+      select(row, everything()) %>% 
+      arrange(row) %>% 
+      tail()
+    ```
+
+
+##### Exercise ([RDS](https://r4ds.had.co.nz/) 13.3.1.2): 
+- Identify the primary keys in the following data frames.
+- You will probably need to install some packages (use the console) and then read the help documentation, e.g. `??Batting`.
+
+- `Lahman::Batting`,
+    ```{r, echo = params$solutions, eval = params$solutions}
+    ## playerID, yearID, and stint
+    Lahman::Batting %>%
+      count(playerID, yearID, stint) %>%
+      filter(n > 1)
+    ```
+    
+- `babynames::babynames`,
+    
+    ```{r,  echo = params$solutions, eval = params$solutions}
+    ## year, sex, and name
+    babynames::babynames %>%
+      count(year, sex, name) %>%
+      filter(n > 1)
+    nrow(babynames::babynames)
+    ```
+    
+- `nasaweather::atmos`,
+    ```{r,  echo = params$solutions, eval = params$solutions}
+    ## lat, long, year, and month
+    nasaweather::atmos %>%
+      count(lat, long, year, month) %>%
+      filter(n > 1)
+    ```
+    
+- `fueleconomy::vehicles`,
+    ```{r,  echo = params$solutions, eval = params$solutions}
+    ## id
+    fueleconomy::vehicles %>%
+      count(id) %>%
+      filter(n > 1)
+    ```
+    
+- `ggplot2::diamonds`.
+    
+    ```{r,  echo = params$solutions, eval = params$solutions}
+    ## None
+    ggplot2::diamonds %>%
+      distinct() %>%
+      nrow() - nrow(diamonds)
+    ```
+
+### Join Functions in the dplyr Package
+
+- Getting data from two (or more) tables requires using the primary keys and foreign keys to logically connect the tables.
+- These "connections: are called **joins**
+- The dplyr package has functions to connect or join tables so you can work with their data
+- The dplyr package supports seven types of joins: 
+  + Four types of **mutating joins**, 
+  + Two types of **filtering joins**, and 
+  + A **nesting join**.
+- Many sources refer to the first table in a join function argument list as the `x` table or the left table or the "parent" table and second table in the argument as the `y` table or the right table or the "child" table 
+- The primary key fields for the `y`/right/child table must be able to be matched to fields in the `x`/left/parent table which can serve as a foreign key.
+
+#### Mutating Joins: Inner, Left, Right, Full
+- Mutating Joins affect the rows and columns of either the `x` or `y` table
+- `inner_join()`: returns *all rows from x where there are matching values in y*, and *all columns from x and y*. 
+  + If there are multiple matches between x and y, all combination of the matches are returned.
+  + Rows that do not match are not returned
+- `left_join(): `returns *all rows from x*, and *all columns from x and y*. 
+  + Rows in x with no match in y are returned but will have `NA` values in the new columns. 
+  + If there are multiple matches between `x` and `y`, all combinations of the matches are returned.
+
+- `right_join()`: returns *all rows from y*, and *all columns from x and y*. 
+  + Rows in `y` with no match in `x` will have `NA` values in the new columns. 
+    + If there are multiple matches between `x` and `y`, all combinations of the matches are returned.
+- `full_join()`: returns *all rows and all columns from both x and y*. 
+  + Where there are not matching values, returns `NA` for the missing values.
+
+#### Filtering Joins Filter Rows in the Left (`x`) Data Frame:
+- They do not add columns; they just filter the rows of `x` based on values in `y`
+- `semi_join()`: returns *all rows from x where there are matching key values in y*, keeping *just columns from x*. 
+  + Filters out rows in `x` that do *not* match anything in `y`. 
+
+- A semi-join is not the same as an inner join 
+  + an inner join will return one row of `x` for each matching row of `y`, (potentially adding  multiple rows) whereas
+  + a semi-join will never duplicate rows of `x`. 
+  
+- `anti_join()`: returns *all rows from x where there are not matching key values in y*, keeping *just columns from x*.
+  + Filters out rows in x that do match anything in y (the rows with no join).
+
+#### Nesting joins create a list column of data.frames 
+- `nest_join()` return all rows and all columns from `x`. 
+  + Adds a list column of tibbles where each tibble contains all the rows from `y` that match that row of `x`. 
+  + hen there is no match, the list column is a 0-row tibble with the same column names and types as `y`. 
+  + `nest_join()` is the most fundamental join since you can recreate the other joins from it. 
+    - An `inner_join()` is a `nest_join()` plus an `tidyr::unnest()`, 
+    - A `left_join()` is a `nest_join()` plus an `unnest(.drop = FALSE)`. 
+    - A `semi_join()` is a `nest_join()` plus a `filter()` to ensure every element of data has at least one row, 
+    - An `anti_join()` is a `nest_join()` plus a `filter()` to ensure every element of data has zero rows.
+  
+### Joins in Pictures
+
+- Suppose we have the following two data frames
+
+    ![](./graphics/join-setup.png)
+
+    ```{r}
+    x <- tribble(~key, ~val_x,
+                 #---  ------
+                 1,    "x1",
+                 2,    "x2",
+                 3,    "x3")
+    y <- tribble(~key, ~val_y,
+                 #---  ------
+                 1,    "y1",
+                 2,    "y2",
+                 4,    "y3")
+    ```
+
+
+- A join connects rows of `x` to rows of `y`.
+
+    ![](./graphics/join-setup2.png)\ 
+
+- E.g. match row `1` of `x` with row `1` of `y`, and row `2` of `x` with row `2` of `y`.
+
+    ![](./graphics/join-inner.png)\ 
+
+#### `inner_join(x, y)` 
+- This is the simplest join to add 
+- Matches the rows of `x` with rows of `y` *only when their keys are equal*.
+
+    ![](./graphics/join-inner.png)\
+
+    ```{r, inner_join}
+    inner_join(x, y, by = "key")
+    ```
+
+- Keeps all rows that appear in *both* data frames.
+
+
+##### Exercise: 
+- Select all flights using a plane where you have some information.
+
+    ```{r, exericse_ij, echo = params$solutions, eval = params$solutions}
+    inner_join(flights, planes, by = "tailnum")
+    ```
+
+
+#### Outer Joins: Left, Right, Full
+
+- Outer Joins keep all rows that appear in *at least one* data frame and add columns from the other table for those rows.
+
+    ![](./graphics/join-outer.png)\
+
+##### `left_join(x, y)` 
+- Keeps all rows of `x` and adds columns from `y`. 
+- Puts in `NA` in the new `y` columns if no match.
+- By far the *most common* join
+- Always use a left join unless you have a good reason not to.
+
+    ```{r}
+    left_join(x, y, by = "key")
+    ```
+   
+##### `right_join(x, y)` 
+- Keeps all rows of `y`and adds columns from `x`. 
+- Puts in `NA` in `x` columns if no match.
+
+    ```{r}
+    right_join(x, y, by = "key")
+    ```
+- Note what happens when you switch the type of join and the data frame
+    ```{r}
+    left_join(y, x, by = "key")
+    ```
+- You have flexibility to choose the order you are doing the joins and the type of joins to get the results you want from your workflow.
+
+##### `full_join(x, y)` 
+- Keeps all rows of both and adds columns from `y` to `x`.
+- Puts in `NA` wherever there is no match
+- Can cause a lot of extra rows and columns with `NAs` if not careful
+- Only use when absolutely necessary and then only after you have selected the desired variables and filtered the desired rows.
+
+    ```{r}
+    full_join(x, y, by = "key")
+    ```
+    
+
+##### Exercise: 
+- Add the full airline names to the `flights` data frame.
+    ```{r, eval = params$solutions, echo = params$solutions}
+    left_join(flights, airlines, by = "carrier") %>%
+      select(name, everything())
+    ```
+    
+
+#### Duplicate Keys
+- One would not expect to have rows with duplicate primary keys in a table from a relational database (most enforce no duplicates on the primary key fields)
+- However, data from sources without rules enforcing key uniqueness often have them.
+- If you have duplicate keys the `x` table, then during a left join with a `y` where there is no duplication, the rows of `y` are copied multiple times into the new `x` data frame.
+
+    ![](./graphics/join-one-to-many.png)\
+    
+- This can be useful when you want to add additional information (rows) to `x` as there can be a one-to-many relationship.
+- In a sense the "original" `x` key was really a foreign key with respect to the join as it did not uniquely identify the rows in `x` but was a primary key for `y`.
+    
+    ```{r}
+    x_mult <- tribble(~key, ~val_x,
+                      ##--  ------
+                      1,    "x1",
+                      2,    "x2",
+                      2,    "x3",
+                      1,    "x4")
+    
+    left_join(x_mult, y, by = "key")
+    ```
+    
+
+- If you have duplicate keys in both (usually a mistake), then you get *every possible combination* of the values in x and y at the key values where there are duplications.
+
+    ![](./graphics/join-many-to-many.png)\
+    
+    ```{r}
+    y_mult <- tribble(~key, ~val_y,
+                      ##--  ------
+                      1,    "y1",
+                      2,    "y2",
+                      2,    "y3",
+                      1,    "y4")
+    
+    left_join(x_mult, y_mult, by = "key")
+    ```
+
+##### Exercise: 
+- In the previous two exercises with `flights` we had some "duplicate keys". 
+- For each exercise, what were they and what was the result?
+  
+    ```{block, echo = params$solutions, eval = params$solutions}
+    `flights` had the duplicate keys both times. 
+    
+    1. `tailnum` was a duplicate key
+    We added the plane annotation to each flight (where multiple flights used
+    the same plane)  
+    
+    2. `carrier` was a duplicate key
+    We added the carrier name (where multiple flights used the same carrier)
+    in the second exercise.
+    ```
+
+#### `semi_join(x, y)` 
+- *Keeps* all of the rows in `x` that have a match in `y` (but doesn't add the variables of `y` to `x`).
+  
+    ![](./graphics/join-semi.png)\
+  
+    ```{r}
+    semi_join(x, y, by = "key")
+    ```
+    
+#### `anti_join()` 
+- *Drops* all of the rows in `x` that *do not* have a match in `y` (but doesn't add the variables of `y` to `x`).
+  
+    ![](./graphics/join-anti.png)\
+  
+    ```{r}
+    anti_join(x, y, by = "key")
+    ```
+  
+##### Exercise: 
+- Find the 10 days of the year with the highest *median* departure delay and assign to a new data frame. 
+- Join the appropriate data frames to select all flights from those 10 days.
+  
+    ```{r, eval = params$solutions, echo = params$solutions}
+    flights %>%
+      group_by(year, month, day) %>%
+      summarize(med_dep = median(dep_delay, na.rm = TRUE)) %>%
+      arrange(desc(med_dep)) %>%
+      ungroup() %>% # Note what happens without the ungroup()
+      slice(1:10) ->
+      ten_worst
+    
+    semi_join(flights, ten_worst)
+    ```
+  
+### Other Key Names
+
+- If the primary and foreign keys names do not match, you need to specify the matching  names in a vector
+- Example: `left_join(x, y, by = c("a" = "b"))`, where `a` is the key in `x` and `b` is the key in `y`.
+- Here we join by single keys with different names in the `x` and `y` data frames
+    ```{r}
+    left_join(flights, airports, by = c("origin" = "faa")) %>% 
+      head()
+    ```
+    
+- If you have multiple variables acting as a combined key, specify the `by` argument 
+  as a vector.
+- If they have the same name, you can drop the `=` argument
+- The `,` serve as an "AND" operator
+
+    ```{r}
+    left_join(flights, weather, by = c("origin", "year", "month", "day", "hour")) %>% 
+      head()
+    ```
+ 
+- You can specify both multiple variables and with different names if necessary
+- You cannot specify one key from `x` to have two different values in `y` - there is no "OR" operation; you have to do two joins.
+  
+##### Exercise: Is there a relationship between the age of a plane and its delays? 
+  + Select the variables of interest, 
+  + Join the appropriate tables, 
+  + Select the Variables of interest
+  + Create a variable for the Age of the plane as of 2013
+  + Assign to a new data frame
+  + Use the new data frame to plot the age and apply an OLS Smoother - you may want to use `hexbin::geom_hex()` instead of geom_point
+  + Run a linear model of departure delay on age and interpret the results. 
+  + What about for arrival delay?
+
+    ```{r, echo = params$solutions, eval = params$solutions}
+    library(hexbin)
+    flights %>%
+      select(tailnum, contains("delay")) %>%
+      left_join(planes, by = "tailnum") %>%
+      select(year, contains("delay")) %>%
+      mutate(age = 2013 - year) ->
+      subflight
+    
+    ggplot(subflight, aes(x = age, y = dep_delay)) +
+      xlab("Age of Plane") +
+      ylab("Departure Delay (min)") +
+      geom_hex() +
+      theme_bw() +
+      geom_smooth(method = "lm", se = FALSE) +
+      scale_fill_continuous(low = "grey90", high = "black")
+    
+    lm(dep_delay ~ age, data = subflight) %>%
+      summary()
+    
+    ## Not adjusting for anything, it seems each additional year older 
+    ## for a plane is associated with a 6 second decrease in departure delay.
+    
+    ggplot(subflight, aes(x = age, y = arr_delay)) +
+      xlab("Age of Plane") +
+      ylab("Arrival Delay (min)") +
+      geom_hex() +
+      theme_bw() +
+      geom_smooth(method = "lm", se = FALSE) +
+      scale_fill_continuous(low = "grey90", high = "black")
+    
+    lm(arr_delay ~ age, data = subflight) %>%
+      summary()
+    
+    ## We got a similar finding with the arrival delay
+    ```
+
+
+
+## References 
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc. 
+* [Chapter 13](https://r4ds.had.co.nz/workflow-projects.html)
+  + [Data Transformation Cheatsheet](https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf)

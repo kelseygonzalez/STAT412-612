@@ -1,6 +1,59 @@
-h1:methods Methods
 h1:ggplot1 Data Visualization with ggplot2 I
 h2:lecture-notes Lecture Notes
+h3:whats-in-a-name What’s in a name?
+h2:plotting-in-r Plotting in R
+h3:three-main-plotting-systems-in-r Three main plotting systems in R:
+h3:examples Examples
+h4:base-r :
+h4:lattice :
+h4:ggplot2-package  Package:
+h4:tradeoffs Tradeoffs
+h2:why-create-graphics-for-exploratory-data-analysis Why Create Graphics for Exploratory Data Analysis ?
+h3:anscombe Anscombe
+h3:the-datasaurus-dozen-package The  Package
+h2:the-ggplot2-package The  package
+h3:foundational-concepts-underlying-the-ggplot2-package Foundational Concepts Underlying the ggplot2 Package
+h3:elements-of-the-grammar-of-graphics Elements of the Grammar of Graphics
+h3:the-ggplot-function-is-the-workhorse-of-ggplot2 The  function is the Workhorse of ggplot2
+h2:comparing-two-quantitative-variables Comparing Two Quantitative Variables
+h3:scatterplots-geom_point Scatterplots: 
+h3:adding-a-third-dimension-by-coding-or-annotating-by-a-categorical-variable Adding a Third Dimension by Coding (or Annotating) by a Categorical Variable
+h4:exercises Exercises:
+h3:adding-a-third-dimension-by-coding-or-annotating-by-a-quantitative-variable Adding a Third Dimension by Coding (or Annotating) by a Quantitative Variable
+h4:exercise Exercise
+h3:multiple-mappings-can-lead-to-sensory-overload Multiple mappings can lead to sensory overload
+h4:exercise-1 Exercise
+h3:smoothing-geom_smooth Smoothing: 
+h4:coding-by-categorical-variable Coding by Categorical Variable
+h4:smoothing-methods Smoothing Methods
+h3:layering-geoms Layering Geoms:
+h4:exercise-2 Exercise
+h3:reducing-overplotting-of-points Reducing Overplotting of points
+h4:exercise-3 Exercise
+h3:another-option-is-create-a-2-d-summary-using-geom_hex Another Option is Create a 2-D Summary Using 
+h2:one-quantitative-variable One Quantitative Variable
+h3:histograms-geom_histogram Histograms: 
+h3:adding-a-second-dimension-by-coding-annotating-by-a-categorical-variable Adding a Second Dimension by Coding (Annotating) by a Categorical Variable
+h4:adjusting-the-color-of-the-bars Adjusting the Color of the Bars
+h4:adjusting-the-position-of-the-bars Adjusting the Position of the Bars
+h4:exercise-4 Exercise
+h3:density-plots-geom_density Density Plots: 
+h2:one-categorical-variable-and-one-quantitative-variable. One Categorical Variable and One Quantitative Variable.
+h3:box-plots---geom_boxplot Box Plots - 
+h3:changing-scales Changing Scales
+h4:exercise-5 Exercise
+h2:facets Facets
+h4:exercise-6 Exercise
+h2:other-types-of-formatting Other Types of Formatting
+h3:aesthetics-for-all-objects. Aesthetics for all objects.
+h3:use-themes-to-change-the-overall-style Use Themes to Change the Overall Style
+h4:exercise-7 Exercise
+h3:control-the-scales-for-different-elements-of-the-graph Control the Scales for Different Elements of the Graph
+h2:colorblind-safe-palettes Colorblind safe palettes
+h2:labels-main-axes-legends Labels: Main, Axes, Legends
+h2:saving-plots-ggsave Saving Plots: 
+h4:exercise-8 Exercise
+h2:learning-outcomes-review Learning Outcomes Review
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

@@ -1,0 +1,494 @@
+---
+title: 'STAT 412/612 Class 18: Factors with `forcats`'
+author: "Kelsey Gonzalez"
+date: "3/29/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+
+# Factors with `forcats`
+Learning Outcomes
+
+- Use functions from the `forcats` package to manipulate factors in R.  
+
+### Factors
+#### Introduction
+- A **factor** variable is R's way to differentiate **categorical** data, i.e., a variable where each observational/experimental unit belongs to one and only one group, category, or level out of a finite set of groups, categories, or levels.
+- Being designated as a factor allows R to provide special treatment to the data
+  + Hair Color could be a factor with levels: Auburn, Red, Brown, Black, Blonde, ... 
+  + City sizes: Small, Medium, Large, or Megalopolis
+  + Major: Data Science, Mathematics, Statistics, or Other
+  
+- Factors may have words as labels for the levels but they are different from a character variable such as "Brown" or "Small":
+1. Factors have a fixed (usually small) number of "levels" (possible values)  
+  + A character variable, e.g., "City_name", can have many different values.
+2. Factors have a default ordering of the levels
+  + Character variables are only ordered through alpha-numeric sequencing
+  + Note the Default ordering for factors in R is alpha-numeric **but you can change it** to whatever makes sense for the problem
+  + Ordering is useful when determining the order to plot something.
+
+#### Example        
+- The forcats package is part of the tidyverse so let's load the tidyverse. 
+- Let's use `tribble()` to create a data frame with the average highs in DC for each month.
+
+    ```{r, message = FALSE}
+    library(tidyverse)
+    dcclimate <- tribble(~month, ~avehigh,
+                         ##----/---------
+                         "Jan",  43.4,
+                         "Feb",  47.1,
+                         "Mar",  55.9,
+                         "Apr",  66.6,
+                         "May",  75.4,
+                         "Jul",  88.4,
+                         "Aux",  86.5,
+                         "Sep",  79.5,
+                         "Oct",  68.4,
+                         "Nov",  57.9,
+                         "Dec",  46.8)
+    head(dcclimate)
+    ```
+    
+- Notice Month is a character variable. What happens when we plot the data?
+
+    ```{r}
+    ggplot(dcclimate, aes(x = month, y = avehigh)) +
+      geom_col()
+    ```
+- The months are in alphabetical order, not calendar order - "A" months come first
+- It's hard to see the weather for June is missing
+- The 3-letter abbreviation for August is incorrect.
+
+- We will see how Factors (and forcats) can help us address all of these issues and more!.
+
+#### Factors are special in that they have *two* different representations of their levels
+- A categorical variable, by definition, has two or more levels (groups, or categories)
+- Each level has a unique label and a unique integer value
+- R shows us the labels of the levels whenever we look at the data
+  + The labels can be words or numbers, e.g., ratings: "red", "yellow", "green"; or groups: "1", "2", "3"
+  + The labels have a default order, but you determine if the order has any meaning, e.g., "red" is lower than "yellow"
+  + Use `levels(factor_var)` to access or see the labels and the ordering of the levels
+- R stores the value of the factor as integer behind the scenes using the integers from 1, 2, ... number of levels.
+  + Use `as.numeric(factor_var)` or `as.integer()` to access the numeric representation as doubles or as integers
+
+#### Be careful when working with factor data as results may be counter-intuitive at first.
+
+- Example: Assume a treatment has four levels "2", "15", "32", and "51" and we have five observations.
+- Let's create a character variable `x` for the observation values (their levels)
+- We can convert it to factor `xf` using `factor()` or `readr::parse_factor()` or `as.factor()`
+- We can then compare `x` and `xf`
+    ```{r}
+    x  <- c("51", "32", "15", "2", "32")
+    xf <- parse_factor(x)
+    x
+    class(x)
+    as.numeric(x)
+    
+    xf
+    class(xf)
+    typeof(xf)
+    levels(xf)
+    as.numeric(xf)
+    ```
+
+- Example of converting a character vector to a factor
+    ```{r}
+    as.numeric(c("Hello", "Goodbye", "Hello"))
+    as.numeric(factor(c("Hello", "Goodbye", "Hello")))
+    as.numeric(parse_factor(c("Hello", "Goodbye", "Hello")))
+    ```
+- Note the different ordering of `factor()` and `parse_factor()` - we will revisit this.
+
+- Combining factors with `c()` *combines the integer representations*, not the levels
+    ```{r}
+    fac1 <- factor(c("x1", "x2", "x3", "X5"))
+    fac2 <- factor(c("y1", "y2", "y3"))
+    c(levels(fac1),levels(fac2)) # just the character representation of the levels
+    str(c(levels(fac1),levels(fac2)))
+    c(fac1, fac2)
+    str(c(fac1, fac2))
+    str(c(as.numeric(fac1),as.numeric(fac2)))
+    str(c(as.integer(fac1),as.integer(fac2)))
+    ```
+
+#### Converting Factor Variables with numbers as levels to Numeric Variables  
+- Sometimes you may get data where there are numbers coded as a factor but you want to work with the actual numbers to take advantage of their mathematical relationships
+- If you are 100% sure all levels of a factor variable are numeric, you can convert the values of a factor variable to be numeric.
+- Does this work? Recall our vector of 5 observations: `xf`
+    ```{r}
+    xf
+    levels(xf)
+    parse_number(levels(xf)) 
+    ```
+- No, it just converts the 4 levels, not the whole vector of 5 observations
+
+- Consider using the integer representation from `as.numeric()` inside select brackets
+  + *Takes advantage of recycling*
+    ```{r}
+    xf             # five observations of four levels
+    as.numeric(xf) # see the integer representation: 1,2,3,4,2
+    xf[xf]         # [xf] extracts the values using the integer representation
+    levels(xf)     # get the levels
+    levels(xf)[xf] # use recycling to extract the levels based on the vector's values 
+    class(levels(xf)[xf]) # this is now a character vector
+    ```
+- Now we have a vector of characters for the numerics for all the observations in the variable
+- Final step is use a readr parse function to convert
+- You can do the conversion in one step as follows:
+    ```{r}
+    parse_number(levels(xf)[xf])
+    # to confirm
+    class(parse_number(levels(xf)[xf]))
+    ```
+  
+### Creating Factors
+#### readr and base R have functions to create factor variables
+- Use `parse_factor()` (readr) or `factor()` (base R) to create a factor variable 
+- `parse_factor()` returns better warnings, so use it whenever possible.
+
+- Example where we try to set the levels to the standard abbreviations in calendar order
+
+    ```{r}
+    monthvec <- c("Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+                  "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+    
+    # or consider using month.abb to eliminate typos...
+    #  a built in constant for the month abbreviations
+    month.abb
+    monthvec <- month.abb 
+   
+    dcclimate %>%
+      mutate(monthfc = factor(month, levels = monthvec)) ->
+      dcclimate
+    
+    dcclimate %>%
+      mutate(monthfc2 = parse_factor(month, levels = monthvec)) ->
+      dcclimate
+    
+    dcclimate$monthfc
+    as.integer(dcclimate$monthfc)
+    dcclimate$monthfc2
+    as.integer(dcclimate$monthfc2)
+    ```
+
+#### Working with factor levels and their order  
+- If you do not specify the `levels` argument, R will assume the levels are the *unique* values of the vector.
+  + `factor()` takes the order of the levels to be the same order returned by `sort()`.
+  + `parse_factor()` takes the order of the levels to be the same order *as the order of the values as introduced in the data*.
+  
+- Example: Notice the different order of the levels 
+    ```{r}
+    x <- c("A", "string", "vector", "is", "a", "string", "vector")
+    factor(x)
+    sort(unique(x))
+    parse_factor(x)
+    ```
+
+- You can always see the levels of a factor (and their order) using the `levels()` function
+    ```{r}
+    levels(dcclimate$monthfc)
+    ```
+- Other options are the `fct_unique()` and `fct_count()` functions from the forcats package.
+    ```{r}
+    fct_unique(dcclimate$monthfc)
+    fct_count(dcclimate$monthfc)
+    ```
+    
+- You can count the number of levels with `nlevels()`.
+    ```{r}
+    nlevels(dcclimate$monthfc)
+    ```
+
+- **The level order for a factor variable sets the order of the variable in the ggplot aesthetic mapping**.
+- Note: `NA`s are last
+
+    ```{r}
+    ggplot(dcclimate, aes(x = monthfc, y = avehigh)) +
+      geom_col()
+    ```
+    
+- We can force missing levels to be included in the plot by using the `drop = FALSE` argument in the appropriate scale call:
+  
+    ```{r}
+    ggplot(dcclimate, aes(x = monthfc, y = avehigh)) +
+      geom_col() +
+      scale_x_discrete(drop = FALSE)
+    ```
+
+### The tidyverse forcats Package
+
+- forcats is an R package which makes two things much easier:
+  + *Changing the order* of the levels of a factor variable.
+  + *Changing the levels* of a factor variable.
+- It also has a few other helper functions for factors.
+
+- **All forcats functions begin with `fct_`**. 
+  + You can type `fct_` and use tab-completion to scroll through the possible functions.
+- forcats is a part of the tidyverse, so you don't need to load it separately after you load the tidyverse.
+    
+#### Changing the Order of the Levels
+- We can reorder based on the values of another variable, reverse their order, or put them in a custom order.
+- Let's look at the `gss_cat` data set which is a subset of the data from the 
+  [General Social Survey](https://en.wikipedia.org/wiki/General_Social_Survey).
+- `gss_cat` is part of the forcats package so we can load it with `data()`
+- Let's use `tibble::glimpse()` as `gss_cat` has more variables than fit on the page. 
+- `glimpse()` transposes the view so the variables show down the page so we can see them all, with as many observations as fit on the width of the page.
+    ```{r}
+    data(gss_cat)
+    head(gss_cat)
+    glimpse(gss_cat)
+    ```
+ - Note there are six factor variables in `gss_cat`
+
+- You often want to change the order of the levels of a factor to make plots more insightful or easier to interpret.
+
+- Let's plot the average TV hours by Religion using the current (default) order of the levels present in the data.
+    ```{r}
+    levels(gss_cat$relig)
+    gss_cat %>%
+      group_by(relig) %>%
+      summarize(tvhours_mean = mean(tvhours, na.rm = TRUE)) ->
+      tvdat
+    
+    ggplot(tvdat, aes(x = tvhours_mean, y = relig)) +
+      geom_point() +
+      xlab("Average TV Hours") +
+      ylab(NULL)
+    ```
+- This plot is hard to interpret as the religions don't seem to be in any particular order and there is no clear relationship with the TV hours 
+- Let's reorder the levels for our plot
+
+- Use `fct_reorder()`  to reorder the levels of a factor *based on the values of another variable*. The arguments are:
+  + `f`: The factor vector.
+  + `x`: A *numeric vector* you want to use to reorder the levels (default is ascending order (`desc = FALSE`)).
+  + `fun`: A function you may want to apply to `x`, the result of which will be used to order the levels of `f`.
+      + default is the median
+- If we want to "permanently" change the levels we put the `fct_reorder()` inside a mutate.
+
+- Let's reorder `relig` based on the mean of TV hours we calculated earlier.  
+    ```{r}
+    levels(tvdat$relig)
+    tvdat %>%
+      mutate(relig = fct_reorder(relig, tvhours_mean)) ->
+      tvdat
+    levels(tvdat$relig)
+    ```
+
+- The plot now uses the new order in the data to order the values on the y-axis.
+    ```{r}
+    ggplot(tvdat, aes(x = tvhours_mean, y = relig)) +
+      geom_point() +
+      xlab("Average TV Hours") +
+      ylab(NULL)
+    # Note, there is no data for "Not Applicable"
+    ```
+
+- We can also reorder inside the `aes()` call of the plot without using `mutate()`.
+- Let's look at the max of TV hours.
+    ```{r}
+    gss_cat %>% 
+      group_by(relig) %>% 
+      summarize(max_tv = max(tvhours, na.rm = TRUE)) %>% 
+    ggplot(aes(x = max_tv, y = fct_reorder(relig, max_tv))) +
+      geom_point() +
+      xlab("Max TV Hours") +
+      ylab(NULL)
+    ```
+
+- `fct_rev()` reverses the order of the factors.
+    ```{r}
+    tvdat %>%
+      mutate(relig = fct_rev(relig)) %>%
+      ggplot(aes(x = tvhours_mean, y = relig)) +
+        geom_point() +
+        xlab("Average TV Hours") +
+        ylab(NULL)
+    ```
+    
+- `fct_relevel()` allows you to *move existing levels to any location you choose*.
+  + Use `after =` to set the new location
+  + Any levels not mentioned will be left in existing order
+
+- Let's look at the current levels and then several moves.
+    ```{r}
+    levels(tvdat$relig)
+    ```
+
+- Move "None" to first level
+    ```{r}
+    fct_relevel(tvdat$relig, "None") %>%
+      levels()
+    ```
+
+- Move "None" to the third level
+    ```{r}
+    fct_relevel(tvdat$relig, "None", after = 2) %>%
+      levels()
+    ```
+
+- Move "None" to the last level
+    ```{r}
+    fct_relevel(tvdat$relig, "None", after = nlevels(tvdat$relig)) %>%
+      levels()
+    ```
+
+- `fct_relevel()` returns a warning if you try to move a level that does not exist.
+- "Cthulhuism" is not a level.
+    ```{r}
+    fct_relevel(tvdat$relig, "Cthulhuism")
+    ```
+
+- You can move multiple levels at once using `c()`.
+    ```{r}
+    fct_relevel(tvdat$relig, c("Catholic", "None", "Protestant"), after = 3L) %>% 
+      levels()
+    ```
+
+##### Exercises: 
+1. Look at the help examples for `fct_relevel()` 
+- Change the levels of the `partyid` variable so the levels are sorted in reverse alphabetical order.
+  
+    ```{r,  }
+    gss_cat %>%
+      mutate(partyid = fct_relevel(partyid, 
+                                   sort(levels(partyid), decreasing = TRUE))) %>%
+      count(partyid)
+    ```
+  
+2. Move the `"Not applicable"` level for the `rincome` variable to be the next-to-last level.
+- Do not use the `nlevels()` function
+  
+    ```{r,  }
+    gss_cat %>%
+      mutate(rincome = fct_relevel(rincome, "Not applicable", after = length(levels(gss_cat$rincome))-2)) %>%
+      count(rincome) %>% tail()
+    ```
+
+#### Modify the Labels of the Factor Levels
+
+- Let's look at the levels of `partyid` in `gss_cat`.
+
+    ```{r}
+    levels(gss_cat$partyid)
+    ```
+    
+- Use `fct_recode()` (inside a `mutate()`) to *change the labels* for the levels.
+- The new label level goes on the left of the equals sign. 
+- The old label level goes on the right. 
+- Think `New <- Old` like `mutate()` or `summarize()`
+
+    ```{r}
+    gss_cat %>%
+      mutate(partyid = fct_recode(partyid,
+                                  "Republican, strong"    = "Strong republican",
+                                  "Republican, weak"      = "Not str republican",
+                                  "Independent, near rep" = "Ind,near rep",
+                                  "Independent, near dem" = "Ind,near dem",
+                                  "Democrat, weak"        = "Not str democrat",
+                                  "Democrat, strong"      = "Strong democrat"
+                                  )) ->
+      gss_cat
+    levels(gss_cat$partyid)
+    ```
+  
+
+##### Exercise
+- Modify the factor levels of `marital` to be abbreviations of their long-names. 
+- For example, "Divorced" can just be "D"
+
+    ```{r,  }
+    fct_recode(gss_cat$marital,
+               "NA" = "No answer",
+               "NM" = "Never married",
+               "S"  = "Separated",
+               "D"  = "Divorced",
+               "W"  = "Widowed",
+               "M"  = "Married") %>% 
+      levels()
+    ```
+
+  
+#### Other Useful Functions.
+
+- `fct_c()`: is the **safe way to combine factor vectors**.
+
+    ```{r}
+    fc1 <- parse_factor(c("A", "B"))
+    fc1
+    fc2 <- parse_factor(c("C", "D"))
+    fc2
+    fct_c(fc1, fc2)
+    # Not the same as
+    c(fc1, fc2)
+    ```
+
+- `fct_collapse()`: combines multiple levels into one level.
+- Very useful when you have man factors and you want to create a smaller set, e.g., 50 states into 4 regions
+
+    ```{r}
+    fc <- parse_factor(c("A", "B", "C", "A", "B", "C"))
+    fc
+    fct_collapse(fc, "AB" = c("A", "B"))
+    ```
+
+- `fct_drop()`: removes any levels that are unused.
+  
+    ```{r}
+    fc <- parse_factor(c("A", "B"), levels = c("A", "B", "C"))
+    fc
+    fct_drop(fc)
+    ```
+
+- `fct_expand()`: adds one or more new levels.
+- When you might want to split a factor into to new levels
+
+    ```{r}
+    fc <- parse_factor(c("A", "B"))
+    fc
+    fct_expand(fc, "C", "Z")
+    ```
+
+- `fct_infreq()`: Order by frequency of a level.
+
+    ```{r}
+    fc <- parse_factor(c("A", "B", "C", "B", "C", "C"))
+    fct_count(fc)
+    fct_infreq(fc) 
+    fct_infreq(fc) %>%
+      fct_count()
+    ```
+
+## References 
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc. 
+* [Chapter 16](https://r4ds.had.co.nz/workflow-projects.html)
+* [Chapter 15](https://r4ds.had.co.nz/r-markdown.html)
+  + [Wrangling Categorical Data in R](https://doi.org/10.7287/peerj.preprints.3163v2).
+  + [8.2: Chimeras of the R Inferno](https://www.burns-stat.com/pages/Tutor/R_inferno.pdf)
+  + [Factors with forcats Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/factors.pdf)
+  - [Forcats Overview](https://forcats.tidyverse.org/)
+  - [Dates and Times Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/lubridate.pdf).
+  - [Lubridate Overview](https://lubridate.tidyverse.org/).

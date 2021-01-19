@@ -1,0 +1,976 @@
+---
+title: 'STAT 412/612 Class 6: EDA'
+author: "Kelsey Gonzalez"
+date: "2/8/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+
+![](images/ggplot2_exploratory.png)
+
+data types dive
+![](images/continuous_discrete.png)
+![](images/nominal_ordinal_binary.png)
+
+
+
+
+
+# Data Import with readr and EDA
+
+Learning Outcomes:
+
+- Use Working Directories and relative paths
+- Import (customized) data from flat, rectangular data files using readr
+- Identify and fix common data import challenges using readr
+- Apply different strategies for Exploratory Data Analysis (EDA)
+  + Graphical Summaries
+  + Numerical Summaries with and without tables
+- Develop ideas for further analysis
+
+### Contemplating the Nirvana of Relative Paths - a Review
+
+#### Computers Store Files in a Tree-like Structure
+
+- Most computers store files on a hard drive (even if in the cloud) using an (upside-down) tree structure where the trunk of the tree is the top of the hard drive, usually denoted with "C:"
+- In our upside down tree, we can consider each directory (folder) below the top level of the hard drive as a branch coming off of our hard drive's trunk.
+- Each branch may have multiple other branches coming off of it at the next lower level.
+- Each file sits inside a folder and can be considered a leaf attached to that folder's branch, which is attached to a higher level branch, all the way up to the level of the top of the hard drive.
+- We use a **path** to tell our code how to navigate across this structure of folders (branches) to find a particular file on our hard drive (or in the cloud).
+- There are two ways to express a path:
+1. An Absolute path starting with the level of the hard drive - not a good thing
+2. A Relative Path starting with the level of the tree that is the "Working Directory" for the RStudio console or the file in which we are coding.
+
+#### Absolute Paths are Antithetical to the Concept of Reproducibility of Our Work
+
+- Both Windows and Apple OS machines create separate accounts for each user with a password on the machine.
+- These accounts are created under the hard drive level in a  "/Users" directory where each user has a folder with their user name that includes all files unique to that user.
+- The combination of "Users/username" is often known as the "Home" directory.
+- Absolute paths start from your hard drive level.
+- Enter the command `getwd()` in the console to see an Absolute Path starting with the `Users` directory.
+- RStudio replaces the "/Users/username" in the path with the word "Home" in the files pane and replaces each "/" with a ">"
+- You may see an absolute path start with "~" as a shortcut from the hard drive level to your User directory
+- An absolute path makes your code not reproducible on other computers as no one else is likely to have your computer user name and exact file structure for your files - so no one else can run your code without changing things.
+- If you see your user name in a path in your R files, that is a bad thing.
+- If you are using a path to a file (that is long) and starts with a "~", that is a bad thing
+- **NEVER USE ABSOLUTE PATHS** in your .Rmd or .R files. That leads to rework (rebirth) and starting over!
+
+### Working Directories
+
+- Recall our discussion from week 1 on file structures for R projects (01b_file_system.pdf).
+
+- The **working directory** is directory or folder where R will search for/save files by default.
+- RStudio tracks different working directories for the RStudio console and for each file.
+
+#### The Working Directory for a File
+- RStudio uses the folder location for each file as the working directory for that folder when it is executing commands in a code chunk or knitting the file.
+- It does not matter what the working directory is for the console or what folder is showing in the Files pane.
+- **Do not** change the working directory inside a .Rmd or .R file.
+
+#### The RStudio Console Working Directory
+- You can see the working directory for the console under the "Console" name at the top of the tab.
+  + Note the use of "~" which indicates this is an absolute path.
+- The default working directory for the console is set in Global Settings.
+- If you open RStudio by itself, it will open with that directory as the working directory for the console.
+  + Check your Global Options to make sure it is set to at least your STAT-X12 folder
+- If you click on a file name to open RStudio it will open with the console working directory set to the folder containing the file.
+- You may want to change the console working directory to match a file's working directory, usually so you can test code snippets in the console from your file.
+- You can change the console working directory multiple ways
+  + Use the menu: `Session > Set Working Directory > Choose Directory`.
+  + Use the Shortcut key combination `CONTROL + SHIFT + H` to select a directory
+  + Use the `setwd(abspath)` command in the Console where "abspath" is an absolute path. **Never use `setwd()` in an .Rmd or .R file.**
+  + Use the Files pane's `More` menu to set the current location in the files pane using `Set as Working Directory`
+
+#### Using Relative Paths
+- Knowing the working directory is the first step to using relative paths.
+- Relative paths define the navigation path starting from the working directory.
+- Use a relative path when you want to tell R a location from where to import a data file, to export a data file or to import or export a graphic.  
+- Let's load tidyverse and the mpg data set
+    ```{r, message=FALSE}
+    library(tidyverse)
+    data("mpg")
+    ```
+- Create a simple plot and save it to a variable name (plots are R objects so can be associated with a name )
+    ```{r}
+    pl <- ggplot(mpg, aes(x = hwy, y = cty)) +
+      geom_point()
+    class(pl)
+    typeof(pl)
+    ```
+- We can now save our plot to our computer with the `ggsave()` function.
+  + Look at help for `ggsave()`
+- To save `pl` in the current working directory, we can use the default path (which is the working directory)
+    ```{r, eval = FALSE}
+### default path
+    # ggsave(filename = "my_saved_plot_default_path.pdf", plot = pl)
+```
+- We could make the path explicit as well
+    ```{r, eval = FALSE}
+### explicit path
+    # ggsave(filename = "./my_saved_plot_explicit_wd_path.pdf", plot = pl)
+    ```
+
+- The "`.`" in the relative path means "the current folder" and the "/" means use what follows - a folder name or a file name.
+
+- To save `pl` in the folder one level up the tree from the working directory we would use "../"
+    ```{r, eval = FALSE}
+    # ggsave(filename = "../my_saved_plot.pdf", plot = pl)
+    ```
+
+- The "`..`" means "go one level up".
+
+- A typical project structure has  separate folders for analysis and output. Your .Rmd file would be in the analysis folder. The folder containing a .Rmd file is the default working directory for that .Rmd file.
+
+![Project Structure](images/folders_path.png)\
+
+- To save `pl` in the output folder, we would go up one level and then down with `../down_folder_name/`:
+
+    ```{r, eval = FALSE}
+      # ggsave(filename = "../output/my_saved_plot_in_output.pdf", plot = pl)
+    ```
+- As a reminder, note the use of ".." in the RStudio files pane to the right of the green Up arrow.   
+- If we have a subfolder called "output2" within our current folder. We could save `pl` in "fig" with
+    ```{r, eval = FALSE}
+    # ggsave(filename = "./output2/my_saved_plot_outputs2.pdf", plot = pl)
+    ```
+
+- We can combine multiple ".." and "/" to navigate several levels at once:
+    ```{r multipath, eval = FALSE}
+    # ggsave(filename = "../../../Lectures_Class/05_readr_EDA/analysis/output2/my_saved_plot_multi.pdf", plot = pl)
+    ```
+
+### The readr Package
+
+#### Introduction to readr
+- A lot of datasets are available as flat files, in comma-separated or tab-separated formats, with the column or variable names in the first row of data.
+- The different file types are usually identifiable by their extension.
+- The extension ".csv" stands for "comma-separated values" where **each column is separated by a comma**. Each row is separated as a new line.
+- For example, these are the first 10 rows of a file called hate_crimes2.csv
+
+    <!-- # ```{r, echo = FALSE} -->
+    <!-- # writeLines(readLines(con = "../data/hate_crimes2.csv", n = 10)) -->
+    <!-- # ``` -->
+    
+- The extension ".tsv" stands for "tab-separated values" where **each column is separated by a tab character** and each row is separated as a new line.
+
+- readr is a tidyverse package to **import data from a variety of file formats into tibbles** faster (10x) and more accurately than base R's `read.csv()`
+  + readr converts flat files into data frames (tibbles)
+  + readr does NOT convert character vectors to factors automatically (like R version 3.0 `read.csv()`)
+  + readr functions usually give more informative error messages than base R functions like `read.csv()`
+
+#### Reading in Data from Files in Different Formats Using readr
+
+- The {readr} package is part of the tidyverse so it is automatically installed when you install the tidyverse and loaded when you `library(tidyverse)`.
+
+- We will use the readr package to load "rectangular" datasets in external "flat" files into R.
+  + *Rectangular* means all columns have the same number of rows and all rows have the same number of columns.
+  + The first row, the header row, often contains the names of the columns but does not have to.
+  + *Flat* means all the data is considered as text with no formatting
+
+- readr has multiple functions you can choose from based on the type of flat file you want to read
+- To accurately read a rectangular dataset with readr:
+  + you must select **a readr function** to parse the overall file, and
+  + you may set **a column specification** which is Optional.
+- readr functions will make an informed guess at the column specification so in most cases it is not necessary
+- You can use the **column specification argument to state exactly which data type you want readr to use when converting one or more columns**
+
+- readr supports **seven file formats** with seven read_ functions:
+  + `read_csv()`: comma separated (.CSV) files  - the most common for us
+  + `read_tsv()`: tab separated files  (.TSV)  
+  + `read_delim()`: general delimited files  
+  + `read_fwf()`: fixed width files  
+  + `read_table()`: tabular files where columns are separated by white-space.  
+  + `read_log()`: web log files  
+
+
+#### Reading in files: `read_lines()`, `read_csv()`, `read_tsv()`, `read_csv2()`
+
+- If you don't know the format, use `read_lines()` to print the first few lines so you can see how values are separated (if they are separated).
+
+    ```{r}
+    read_lines(file = "data/hate_crimes2.csv", n_max = 10)
+    ```
+
+- Use `read_csv()` to read a CSV (**comma-separated** values) file into R
+
+    ```{r}
+    hate_crimes <- read_csv(file = "data/hate_crimes2.csv")
+    ```
+- readr tells you how it converted the columns - also known as *parsing* the data    
+- If the **.CSV is online and you know the URL**, you can use the URL for the `file` argument.
+
+    ```{r}
+    hate_crimes <-
+      read_csv(file ="https://dcgerard.github.io/stat_412_612/data/hate_crimes2.csv")
+    ```
+
+- Use `read_tsv()` if columns are **separated by tabs**.
+  + If you use `read_lines()` on a tsv, the tabs will show up as "\\t").
+
+- Use `read_csv2()` if columns are **separated by semicolons**.
+
+- Other file formats are listed in [RDS](https://r4ds.had.co.nz/).
+
+##### Often Not a Good Idea to Import Directly from Excel
+- RStudio is getting better at importing data from Excel as are other packages
+- You may want to import data directly from Excel? **Not recommended.**
+- Excel is designed for human data input and data analysis and not efficient data management
+  + Potential for errors or excess time spent adjusting the data in Excel
+  + People tend to color code information in Excel or be inconsistent in their formatting
+- Instead, export the data from the Excel worksheet as a .CSV. Then read the .CSV file into R.
+  + Edit the data so the information is encoded by a new variable.
+
+### Special Considerations
+
+#### Check the Imported Data
+- **Always check your data immediately after importing it**.
+- Look at the message from readr to see what it did.
+- Check the data types are correct for each of the variables.
+- If something is character that "should be" numeric there may be a challenge with missing or improper data.
+- Check missing data were coded correctly or in multiple ways, e.g., `NA`, "-99", "Not Available", "missing", ....
+  - Try using `unique()` on variables that look incorrect to see why readr parsed the column the way it did.
+  + If you notice something weird during your analysis, consider the possibility of a problem during data import.
+
+- Some techniques:
+    ```{r}
+    # for "smaller" data sets
+    # view(hate_crimes) # in the console
+
+    # for overall structure
+    str(hate_crimes)
+    nrow(hate_crimes)
+    ncol(hate_crimes)
+
+    # for first and last rows
+    head(hate_crimes, n=10)
+    tail(hate_crimes, n=10)
+
+    # Count the number of NAs
+    hate_crimes %>%
+      summarise(across(everything(), ~sum(is.na(.))))
+
+    # Check for duplicate rows
+    hate_crimes %>%
+     summarize(dist = nrow(distinct(.)))
+    nrow(hate_crimes)
+
+    #if a variable is character and should be numeric check the values
+    head(sort(unique(hate_crimes$share_non_citizen)))
+    tail(sort(unique(hate_crimes$share_non_citizen)))
+
+    ```
+
+#### Check Handling of Missing Data: `na` argument for `read_csv()`
+- Sometimes files code missing data in a format other than `NA`. For example, it's common to use periods `.`, or in some settings they use `-99` or `-999` as missing.
+
+- R won't know how to handle this without you telling it, so you'll have to know encoding for the missing data and specify it with the `na` argument in `read_csv()`.
+
+    ```{r}
+   hate_crimes_a <- read_csv("data/hate_crimes_1a.csv")
+   hate_crimes_a %>%
+     filter(str_detect(share_non_citizen, "missing"))
+   hate_crimes_a <- read_csv("data/hate_crimes_1a.csv", na = "missing")
+   hate_crimes_a %>%
+     filter(str_detect(share_non_citizen, "missing"))
+    ```
+
+
+#### readr Function Arguments: `coltypes`, `skip`, `comment`, `locale`
+- readr will scan initial rows to guess the data type for each column (double, integer, character, logic, etc). Sometimes it guesses wrong.
+- If it seems to be guessing wrong, use the `col_types` to explicitly specify the column types.
+
+- If there are comments at the start of a data file use the the `skip` argument to skip the
+  first few lines before starting to read the data
+
+- If the comments begin with a special character, use the argument use `comment = "#"` to drop all lines that start with (e.g.) `#`.
+
+  - readr's default *locale* is US-centric. Be careful when importing data from other countries on things like the character used for a decimal mark (if not a .) and the
+
+#### **Exercise**:
+1. Successfully load all of the `hate_crimes*.csv` files at URL https://dcgerard.github.io/stat_412_612/data.html. Check the first six rows and ensure proper coding of `NA`s.
+
+    ```{r}
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes1.csv")
+    head(hate_crimes)
+
+
+    read_lines(file = "data/hate_crimes1.csv", n_max = 6)
+
+
+    hate_crimes <- read_tsv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes1.csv")
+    head(hate_crimes)
+
+    hate_crimes %>%
+      summarise(across(everything(), ~sum(is.na(.))))
+```
+
+
+    ```{r}
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes2.csv")
+    head(hate_crimes)
+    hate_crimes %>%
+      summarise(across(everything(), ~sum(is.na(.))))
+```
+
+
+    ```{r}
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes3.csv")
+
+
+    read_lines(file = "data/hate_crimes3.csv", n_max = 6)
+
+
+    hate_crimes <- read_csv2(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes3.csv")
+    head(hate_crimes)
+```
+
+
+    ```{r}
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes4.csv")
+    head(hate_crimes)
+
+
+    sort(unique(hate_crimes$share_non_citizen))
+    sort(unique(hate_crimes$hate_crimes_per_100k_splc))
+    sort(unique(hate_crimes$avg_hatecrimes_per_100k_fbi))
+
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes4.csv",
+                            na = ".")
+    head(hate_crimes)
+```
+    ```{r}
+    hate_crimes <- read_csv("data/hate_crimes4a.csv")
+    head(hate_crimes)
+    head(sort(unique(hate_crimes$share_non_citizen)))
+    tail(sort(unique(hate_crimes$share_non_citizen)))
+
+
+    hate_crimes <- read_csv("data/hate_crimes4a.csv", na = "missing")
+    head(hate_crimes)
+
+```
+    ```{r}
+    hate_crimes <- read_csv("data/hate_crimes4b.csv")
+    head(hate_crimes)
+    head(sort(unique(hate_crimes$share_non_citizen)))
+    tail(sort(unique(hate_crimes$share_non_citizen)))
+
+
+    hate_crimes <- read_csv("data/hate_crimes4b.csv", na = "-999")
+    head(hate_crimes)
+    head(sort(unique(hate_crimes$share_non_citizen)))
+    tail(sort(unique(hate_crimes$share_non_citizen)))
+    hate_crimes %>%
+      summarise(across(everything(), ~sum(is.na(.))))
+```
+
+
+    ```{r}
+    hate_crimes <- read_csv2(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes5.csv")
+    head(hate_crimes)
+
+
+    hate_crimes <- read_csv2(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes5.csv",
+                             col_names = FALSE)
+    head(hate_crimes)
+```
+
+
+    ```{r}
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes6.csv")
+    head(hate_crimes)
+
+    hate_crimes <- read_csv(file = "https://dcgerard.github.io/stat_412_612/data/hate_crimes6.csv",
+                            skip = 3)
+    head(hate_crimes)
+    ```
+- **Do not** show all your data checks in your final out for assignments or reports unless specifically requested. You can comment them out as a blco of clode using `CMD+SHIFT+C`
+
+#### Parse functions and `problems(read_in-data)`
+
+- reader uses `parse_*()` functions to convert the characters in the input data into a more specialized vector such as integer, logical, or date
+
+- readr *looks at the first 1000 lines* to guess at the data type. These could be special so you may want to use the `problems(read_in-data)` function to look at the first five parsing failures (see R4DS)
+
+
+### Data Export
+#### `write_csv()`,  `write_csv2()`, and `write_tsv()`
+
+- You can write comma-separated and tab-separated files using `write_csv()`, `write_csv2()`, and `write_tsv()`.
+    ```{r}
+    hate_crimes %>%
+      filter(state %in% c("New York", "New Jersey", "Connecticut")) %>%
+      write_csv("output/nyc_region_data.csv")
+    ```
+
+- The defaults are usually fine.
+
+### Reading/Writing R Objects with `readRDS()` and `saveRDS()`.
+
+- You can save and reload **arbitrary R objects** (data frames, matrices, lists, vectors) using `readRDS()` and `saveRDS()`.
+- .Rds files are compressed data files so enable much faster loading and more compact storage.
+- These are what usually go into the /data folder as opposed to the /data_raw folder
+
+    ```{r}
+    hate_crimes %>%
+      filter(state %in% c("New York", "New Jersey", "Connecticut")) %>%
+      saveRDS("output/nyc_region_data.rds")
+    ```
+
+##### EDA
+### Introduction
+- Once you have loaded and checked your data for completeness and consistency you want to begin to look at it.
+- You may have some initial questions or hypotheses about your question of interest
+- EDA is a process for exploring your data to assess initial hypotheses and generate or uncover new ones
+- You have to be careful about "data snooping" from a statistical perspective
+- It helps to follow a general strategy for EDA
+
+### General Strategies
+
+- Plot the distribution of every variable.
+- Look for symmetry, skewness, modality,  etc..
+- Plot the bi-variate distribution of every pair of variables (to find which variables are associated).
+- Again, look for patterns and relationships, skewness, curvature, modality, gaps, discontinuities, , etc..
+- Color-code by variables to see if relationships appear more clearly.
+- Calculate lots of numerical summary statistics.
+- Look at "missingness". *"The dog that did not bark"*
+- Look at extreme values for potential "outliers" and patterns
+
+- EDA is about **curiosity**.
+- Ask *many* questions, use *many* plots, investigate *many* aspects of your data.
+- This will let you hone in on the few *interesting* questions you want to pursue deeper.
+- Keep track of what you are doing with your .Rmd file text chunks and code chunks so you can protext yourself from becoming a victim of data snooping - only cherry picking the "good results"
+
+    ```{r, message=FALSE}
+    suppressMessages(library(tidyverse))
+    data("diamonds")
+    ```
+
+### Distribution of Every Variable:
+
+#### Categorical Variable: Bar chart (`geom_bar`) and/or `table()` then   `prop.table()`
+
+- Categorical variables have a finite set of discrete values or levels. May be numeric or character (factors)
+- Distribution is described by the relative occurrence (count) in each category (level)
+  + Absolute counts are sometimes interesting, but usually you want to look at the proportion of observations in each category.
+- **Common Questions**
+  + Is there a natural ordering of the categories (bad, medium, good)?
+  + Why are some categories more represented than others?
+  + Are the differences "real" or due to randomness?
+- Graphical and Numerical views:
+  + `geom_bar()`: graphical view of counts of observations (weighted)
+  + `table()` then  `prop.table()` for numeric proportions of observations within each group.
+
+    ```{r}
+    ggplot(diamonds, aes(x = color)) +
+      geom_bar() +
+      ylab("") +
+      ggtitle("Raw Totals using implicit Stat Count")
+
+    ggplot(diamonds, aes(x = color, y = ..)) +
+      geom_bar(aes(y = stat(count) / sum(stat(count)))) +
+      ylab("Proportion")+
+      ggtitle("Calculated Proportion using explicit Stat Count")
+
+    table(diamonds$color)
+    prop.table(table(diamonds$color))
+    ```
+
+#### Quantitative Variable: Use a histogram (`geom_histopgram()`) or density plot (`geom_demsity()`)
+- Quantitative variables have many possible values and are amenable to some mathematical operations. Are always numeric (Integer or Double)
+- Distribution is described by the relative height of the bins or curves across the sample space (range)    
+- Common Questions
+  + Look for modality. Indicates multiple groups of units.
+  + What can explain the modes (most common values - highest bins)? Can any of the other variables explain the modes?
+  + Are certain values more likely than other values?
+  + Look for skew to left or right
+- Graphical and Numerical views:
+  + `geom_histogram()` or `geom_density()` show the relative occurrence for the values in the sample
+  + Numerical Summaries
+    - [mean](https://en.wikipedia.org/wiki/Mean),
+    - [median](https://en.wikipedia.org/wiki/Median),
+    - [standard deviation](https://en.wikipedia.org/wiki/Standard_deviation),
+    - [five number summary](https://en.wikipedia.org/wiki/Five-number_summary).
+       + `fivenum()` returns Tukey's five number summary (minimum, lower-hinge, median, upper-hinge, maximum) for the input data.
+      + Informally, the lower and upper hinges are the 25^th^ and 75^th^ percentiles
+
+    ```{r}
+    ggplot(data = diamonds, mapping = aes(x = carat)) +
+      geom_histogram(bins = 500)
+        ggplot(data = diamonds, mapping = aes(x = carat)) +
+      geom_density()
+
+    fivenum(diamonds$carat)
+    mean(diamonds$carat)
+    sd(diamonds$carat)
+    ```
+
+#### Looking at Multiple Variables at once: Histograms, Density Plots, and Frequency Plots
+- Use color to differentiate by a categorical variable
+    ```{r}
+    diamonds %>%
+    ggplot(aes(x=carat, color = cut)) +
+    geom_histogram(bins = 25, fill = "dark grey") +
+      theme_bw()
+
+    diamonds %>%
+    ggplot(aes(x=carat, color = cut)) +
+    geom_density() +
+      theme_bw()
+
+    diamonds %>%
+    ggplot(aes(x=carat, color = cut)) +
+    geom_freqpoly(bins = 25) +
+      theme_bw()
+    
+    
+    ```
+
+
+### Bi-variate Distribution of Every Pair of Variables
+
+#### Quantitative vs Quantitative: Use a scatterplot `geom_point()`
+
+- **Common Questions**
+  + Is the relationship linear? Quadratic? Exponential?
+  + Can an observed association can be explained by another variable?
+- Logging is useful tool to make some associations more linear.
+  + If the relationship is (i) monotonic and (ii) curved, then try logging
+      the x-variable *if the x-variable is all positive*.
+  + If it is also (iii) more variable at larger y-values, then try logging
+      the y-variable *instead* of the x-variable *if the y-variable is all
+      positive*.
+  + Try logging both if you still see curvature *if both variables are all positive*.
+- Graphical
+  + Scatterplot with `geom_point()`
+  + Adding a smoother can help with `geom_smooth()`
+- Numerical Summaries of a relationship
+  + Correlation coefficient (only appropriate if association is linear).
+  + [Kendall's $\tau$](https://en.wikipedia.org/wiki/Kendall_rank_correlation_coefficient) (always appropriate).
+
+
+    ```{r}
+        ggplot(diamonds, aes(x = carat, y = price)) +
+          geom_point( alpha = .05) +
+          scale_y_log10() +
+          scale_x_log10()
+
+    # Correlation
+        cor(diamonds$carat, diamonds$price)
+        cor(diamonds$carat, diamonds$price, method = "kendall")
+    ```
+
+
+
+#### Categorical vs Quantitative: Use a boxplot `geom_boxplot()`
+- **Common Questions**
+  + For which levels of the categorical variable is the quantitative variable higher or lower?
+  + For which levels is the quantitative variable more spread out?
+- Numerical Summaries
+  - Aggregated means, medians, standard deviations, quantiles
+  - Grouped means, medians, standard deviations, quantiles
+
+    ```{r}
+        ggplot(diamonds, aes(x = color, y = price)) +
+          geom_boxplot(notch = TRUE) +
+          scale_y_log10()
+
+       diamonds %>%
+          mutate(logprice = log(price)) %>%
+          summarize(mean   = mean(logprice),
+                    sd     = sd(logprice),
+                    median = median(logprice),
+                    Q1     = quantile(logprice, 0.25),
+                    Q3     = quantile(logprice, 0.75))
+
+       diamonds %>%
+          mutate(logprice = log(price)) %>%
+          group_by(color) %>%
+          summarize(mean   = mean(logprice),
+                    sd     = sd(logprice),
+                    median = median(logprice),
+                    Q1     = quantile(logprice, 0.25),
+                    Q3     = quantile(logprice, 0.75))
+    ```
+
+
+#### Categorical vs Categorical: Use a mosaic plot or a count plot
+- **Common Questions**
+  + Which pairs of values of the categorical variables have the most number of observations?
+  + Does the conditional distribution of a categorical variable change at different levels of the other categorical variable?
+- Graphical - mosaic plot or point plot
+- Numerical Summaries
+- `table()` followed by `prop.table()`
+
+    ```{r}
+        ## Only gives you the bivariate distribution
+        ggplot(diamonds, aes(x = cut, y = color)) +
+          geom_count()
+
+        ## Gives you the conditional distributions of color given cut
+        ggplot(diamonds, aes(x = cut, fill = color)) +
+          geom_bar(position = "fill")
+
+        ## Gives you the conditional distributions of cut given color
+        ggplot(diamonds, aes(x = color, fill = cut)) +
+          geom_bar(position = "fill")
+
+        ## Bivariate Distribution
+        ## All values sum to 1
+        round(prop.table(table(diamonds$color, diamonds$cut)), 3)
+
+        ## Conditional distributions of column variable conditional on row variable
+        ## Rows Sum to 1
+        round(prop.table(table(diamonds$color, diamonds$cut), margin = 1),2)
+
+        ## Conditional distributions of row variable conditional on column variable
+        ## Columns sum to 1%
+        round(prop.table(table(diamonds$color, diamonds$cut), margin = 2), 2)
+    ```
+
+#### Mosaic Plots `ggmosaic::geom_mosaic()`
+
+- [ggmosaic Reference](https://www.rdocumentation.org/packages/ggmosaic/versions/0.2.0)
+- Use the console to install package ggmosaic (see comments below)
+  + Designed to create visualizations of categorical data
+  + Plots are constructed hierarchically, so the **ordering of the variables** is very important.
+  + Integrated with ggplot2 as a geom which allows for faceting and layering
+
+- A mosaic plot represents each cell in a contingency table of counts by a box
+- **The area of each box equals the count in that cell** defined by the variables you chose.
+
+- Building a ggmosiac plot uses four arguments in the `aes()` call.
+1. `weight =` a weighting variable, often `freq`
+2. `x = ` a formula for the variables you want to compare in the format `product(fill, var2, var3, ...)`  their order, and their relationship
+3. The variable to be used for color `fill`. If not already in the `x= product` formula, it is added as first element in product
+  + Good practice: use the 'response' variable (or your most "important" variable) as fill variable
+4. `conds =` a variable to condition on, declared as `conds = product(cond1, cond2, ...)`
+
+- These four arguments are combined to create a formula for sizing and positioning the boxes based on the counts in the input data.
+  + The boxes are separated by spines along the longest dimension
+
+- The **row (y axis) variable is thought of as the "response variable"**.   
+- The **column variables (x axis) are treated as explanatory or  conditioning variables**, an additional factor of interest or experimental "treatment"
+
+- **Each column is a histogram**, with boxes (bins) stacked on top of each other instead of side by side.
+  + The **width** of the box is the same for all boxes in the same column and is equal to the **total count in that column**.
+  + The **height** of the box is the proportion of **individuals in the column** which fall into that cell.
+- Label positions are approximate as boxes are generally of different widths and heights
+
+
+    ```{r}
+    # Normally you would install.packages("ggmosaic") using the console  
+    # but the latest release of ggplot2 updated the scales and
+    # ggmosaic had to be updated as well (full release pending).
+    # see https://github.com/haleyjeppson/ggmosaic/issues/41
+    #
+    # You can check your versions with the following:
+    # packageDescription("ggmosaic")$Version
+    # packageDescription("ggplot2")$Version
+    #
+    # Use the following in the console instead to install a patch.
+    # You may need to install the devtools package first.
+    #
+    # devtools::install_github('haleyjeppson/ggmosaic')
+    # This patch fixes issues with labels.
+    # Will need to restart R after install
+    suppressMessages(library(ggmosaic))
+    ```
+
+- Ready the data as a data frame and set `Survived` to be a factor    
+    ```{r}
+    data(Titanic)
+    titanic <- as.data.frame(Titanic)
+    titanic$Survived <- factor(titanic$Survived, levels=c("Yes", "No"))
+    head(titanic)
+    ```
+
+- How did survival vary by class?
+- The y variable is `Survived` with one x axis variable, `Class`, no conditions
+- Recall `fill` gets added to the front of the product if not already there, so, here it becomes the y variable
+- Both x and y axes are from 0 to 100%
+    ```{r}
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Class), fill=Survived)) +
+      labs(x="Class", y="Survived")
+    ```
+
+- How did survival rate vary by class considering age?
+- Add a second variable, `Age`, to the formula
+- Now the y axis is `Class` and the x axis is a combination of `Age` and `Survived`
+- The 2x2 combination of `Age` and `Survived` yields four column "histograms" of varying width
+- The x axis has wider gray spine separates the `Age` categories with thinner spines separating `Survived`
+- The Y axis has spines separating the Classes - note there are no children in the crew class
+
+    ```{r}
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Class, Age), fill=Survived)) +
+      labs(x="Age and Survived", y="Class") +
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    ```
+- How did survival rate vary by age considering class?
+- Switch the order of `Class` and `Age`, in the formula
+- The order of the variables in the formula matters.
+- This plot uses the same data, but the formula is different so the boxes are constructed differently
+- Now y axis is `Age` and x axis is combination of Class and Survived, no conditions
+    ```{r}
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Age, Class), fill=Survived)) +
+      labs(x="Class and Survived", y="Age") +
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    ```
+
+- How did Survival vary with the sex and class
+- Put `Survived` first in the formula followed by `Class` and change `fill` to `Sex`
+    ```{r}
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Survived, Class), fill=Sex)) +
+      labs(y="Survived", x="Sex and Class") +
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    ```
+
+
+##### Adding a conditional
+- The earlier plots broke out the data by combinations of the levels of each variable so the total was 100% of cases
+- Conditioning breaks out the data into groups, like `group_by()` so the totals within each group are 100%
+- An earlier plot asked how did survival vary with age and class.
+- Now, let's ask, for each age group, how did survival vary with class
+- Again the labels are approximate - look at the spines. Read as Survived (Yes or No) given the Age group (Child or Adult)
+- Each group adds to 100%
+
+    ```{r}
+    # Original plot
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Class, Age), fill=Survived)) +
+      labs(x="Age and Survived", y="Class") +
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    # Using Age as a conditioning variable
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Class), conds=product(Age), fill=Survived)) +
+      labs(x="Survived for each Age Group", y="Class") +
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+
+##### Adding Additional variables using Facet
+- How did Survival vary with Age and Class
+- Note Survived is first and fill is Age
+- In the first plot, the four main histograms on the x axis are the classes and are subdivided by `Age`, again no children in Crew
+- The second plot breaks this out by `Sex` using `facet_grid()`
+    ```{r}
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Survived, Class), fill=Age)) +
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+    ggplot(data=titanic) +
+      geom_mosaic(aes(weight=Freq, x=product(Survived, Class), fill=Age)) +
+      facet_grid(Sex ~.)+
+       theme(axis.text.x = element_text(angle = 90, hjust = 1))
+    ```
+
+
+#### Checking for Independence with Mosaic Plots
+
+Mosaic plots help detect if two variables are independent. When they are independent, all proportions are the same so the boxes line up in a grid.
+
+##### Plot student admissions by gender
+- We'll use the UCBAdmissions dataset (University of California Berkley)
+- We are interested in the relationshi between Gender and Admissions
+- The data set comes as a named 3-dimensional matrix
+- Let's convert to a data frame and look at it.
+
+    ```{r}
+    data(UCBAdmissions)
+    str(UCBAdmissions)
+    admit_df <- as_tibble(UCBAdmissions)
+    head(admit_df)
+    ```
+- Let's plot Admit versus Gender across all Departments
+
+    ```{r}
+    admit_df %>%
+    ggplot() +
+      geom_mosaic(aes(weight = n, x=product(Gender),fill = Admit))
+    ```
+- Looks like more males apply and males are admitted at a higher rate than females  
+
+- Let's convert the data frame back to a matrix and run a [Chi-Squared test](https://en.wikipedia.org/wiki/Chi-squared_test)
+- The null hypothesis is the two dimensions (Gender and Admit) are independent across the university.
+    ```{r}
+    admit_df %>%
+      pivot_wider(names_from = Admit,
+                  values_from = n) %>%
+      group_by(Gender) %>%
+      summarize(across(where(is.numeric),~sum(.)))  %>%
+      data.matrix(rownames.force = TRUE)   %>%
+      chisq.test(tempdf[,2:3], correct = FALSE)
+    ```
+
+
+##### What Happens If We Add Department
+- We'll look at it in three ways
+- Gender on Y and and Admit by Department on X
+    ```{r}
+    admit_df %>%
+    ggplot() +
+      geom_mosaic(aes(weight = n, x=product(Gender, Dept), fill = Admit)) +
+      ggtitle("Using x=product(Gender, Dept)") +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1))
+```
+- Departments A and B have the highest Admission Rates and the lowest proportion of Female Applicants
+- Department A appears to have a higher Admit rate for women whilte the others appear to be about equal
+- Departments C and E have more Female applicants than Males with equal and relatively lower Admit rates
+- Departments D and F have about the same number of Female and Male applicants with equal but relatively lower Admit rates
+
+- Now look at Gender on Y and Admission for a each Department individually
+    ```{r}
+admit_df %>%
+    ggplot() +
+      geom_mosaic(aes(weight = n, x=product(Gender), conds=product(Dept), fill = Admit)) +
+      theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+      ggtitle("Using conds=product(Dept)")
+```
+- The same general results. The boxes may be a bit wider in some Departments as the counts total to 100% within each Department however they still get sized into the same plot width
+
+- Let's facet by Gender
+    ```{r}
+    admit_df %>%
+    ggplot() +
+      geom_mosaic(aes(weight = n, x=product(Gender), fill = Admit)) +
+      facet_grid(Dept ~.) +
+      ggtitle("Using facet_grid(Dept ~.")
+    ```
+- It's easier to see the Department breakout here and how the high acceptance rate departments (A and B also have the highest proportion of Male Applications )
+
+- In each case it looks like five out of six departments have relative equal rates of admission
+- In the one case where it is different, Department A. The admit rate is actually higher for Women than for Men!
+-
+##### Test Results
+- Let's use a loop to run individual Chi-Squared tests and gather the results
+- See [Source](http://www.utstat.toronto.edu/~brunner/oldclass/312f12/lectures/312f12ContingencyTables2.pdf)
+    ```{r}
+
+    # Summarize analyses of sub-tables: Loop over departments
+    # Sum of chi-squared values in X2
+    ndepts = dim(UCBAdmissions)[3]
+    gradschool=NULL; X2=0
+    for(j in 1:ndepts){
+      dept = dimnames(UCBAdmissions)$Dept[j] # A B C etc.
+      tabl = t(UCBAdmissions[,,j]) # transpose with all rows, all cols, level j
+      Rowmarg = apply(tabl,1,sum) # Summarize each column
+      Percentadmit = round( 100*tabl[,1]/Rowmarg ,1)
+      per = round(Percentadmit,2)
+      Test = chisq.test(tabl,correct=F) # Run the test
+      tstat = round(Test$statistic,2); pval = round(Test$p.value,5) # get the p-value
+      gradschool = rbind(gradschool,c(dept,Percentadmit,tstat,pval))
+      X2 = X2+Test$statistic
+    } # Next Department
+      colnames(gradschool) = c("Dept","%MaleAcc","%FemAcc","Chisq","p-value")
+      noquote(gradschool) # Print character strings without quote marks
+    ```
+- The tests show that for all Departments but A, there is insufficient evidence to reject a Null hypothesis of independence (P-values all >.3). There is very strong evidence ($p$-value 3e-05) to reject the null hypothesis of independence for Department A.
+
+##### So why the different test results at the University level and the Department Level?
+- A good example of [Simpson's Paradox](https://en.wikipedia.org/wiki/Simpson%27s_paradox)
+- Department A has a higher admission rate for Females but very few apply compared to number of  Males that apply so there are many more Male admits to Department A.
+- Department (B) also has a high admission rate for Females but very few apply compared to number of  Males that apply so there are many more Male admits to Department B
+- The low admission rates in the other departments means not enough Females are admitted to balance out A and B
+- This lack of balance overwhelms the admission rates for women in the departments that have more women applicants.
+- Simpsons Paradox is a danger whenever dealing with observational data that has highly unbalanced counts in various groups.
+- Always ask yourself, what else might be going on??
+
+
+### A Pairs Plot Provides Multiple Bivariate Plots at Once: `GGally::ggpairs()`
+
+- The GGally package function `ggpairs()` creates bivariate plots of all included variables in a grid  
+    ```{r message = FALSE}
+    # install.package"GGally") using the console if not installed
+    library(GGally)
+
+    diamonds %>%
+      select(price, carat, cut, color) %>%
+      ggpairs()
+    ```
+
+###  Patterns and Outliers
+
+#### Patterns
+-  Let's lool at waiting time between eruptions and the duration of the eruption for the Old Faithful geyser in Yellowstone National Park, Wyoming, USA.
+    ```{r}
+    data("faithful")
+
+
+
+    faithful %>%
+    ggplot(aes(x=eruptions, y=waiting)) +
+      geom_point()
+
+    faithful %>%
+    ggplot(aes(x=cut_number(eruptions, 2), y=waiting)) +
+      geom_boxplot(notch = TRUE)
+
+    faithful %>%
+    ggplot(aes(x=eruptions, y=waiting)) +
+      geom_point() +
+      geom_smooth(method = "lm", se = FALSE)
+    ```
+
+
+#### Outliers
+- More than 1.5 times the inter-quartile range from either edge of the box
+- Simply indicates it is an extreme value - being an outlier does NOT mean it is wrong
+- Possible Explanations
+  + Represents a true value - which may be a surprise - the ["Black Swan"](https://en.wikipedia.org/wiki/Black_swan_theory)
+  + Was unlucky and happened to get an extreme value
+  + Mixture of distributions undetected in the data collection
+  + Errors or contamination in the collection, transcription or processing of the data
+
+    ```{r}
+    diamonds %>%  
+      ggplot(aes(x= cut, y = price)) +
+      geom_boxplot()
+    ```
+
+    ```{r}
+    library(Sleuth3)
+    data(case0301)
+    data(case0302)
+    ```
+
+    ```{r}
+    ggplot(case0302, aes(x=Veteran, y=Dioxin)) +
+      geom_boxplot()
+
+    ggplot(case0301, aes(x=Treatment, y=Rainfall)) +
+      geom_boxplot()
+    ```
+
+## References
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc.
+  * [Chapter 1](https://r4ds.had.co.nz)
+  * [Chapter 7](https://r4ds.had.co.nz)
+- [Data Import Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/data-import.pdf).
+- [Readr Overview](https://readr.tidyverse.org/).

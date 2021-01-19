@@ -1,0 +1,437 @@
+---
+title: 'STAT 412/612 Class 12: Tidying data with tidyr'
+author: "Kelsey Gonzalez"
+date: "3/1/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+
+![](images/tidydata_1.jpg)
+![](images/tidydata_2.jpg)
+
+
+# Tidying data with tidyr
+Learning Outcomes
+
+- Describe tidy data
+- Make your data tidy with `pivot_longer()`, `pivot_wider()`, `separate()`, and `unite()`.
+
+### Tidy Data
+
+- Data sets are often described in terms of three elements: units, variables and observations:
+  + Units: the items described by the data. 
+    - They may be Observational or Experimental. 
+    - They may be referred to as  units, subjects, individuals, or cases or other terms. 
+    - They represent a population or a sample from a population, e.g., cars, people, or countries.
+    - They are not the "units of measurement" but the items being measured.
+    - They may be represented by variable, e.g., name, a combination of variables, e.g., country and year, or be implied and not explicitly represented by any variable (most common in summarized data), e.g., average scores for a group
+  + Variable: a characteristic or attribute of each unit about which we have data, e.g., mpg, age, or GDP.
+  + Observations: The single value for each variable for a given unit, e.g., 20 mpg, 31 years old, or \$20,513,000 US.
+
+#### Definition of Tidy Data
+- We define tidy data very simply: It is a rectangular data set (the same number of rows for each column) where the data is shaped to have:  
+1.  **One unit per row.** 
+2.  **One variable per column.**
+3.  **One observation (or value) per cell (the intersection of each row and column).**
+    
+- Hadley's visualization:
+
+![](./images/tidy-1.png)\ 
+
+#### The tidyr package is for Tidying or Reshaping Data
+- To **tidy a data set**, we change its "shape" so the variables and observations align to the columns and rows in accordance with our definition. 
+  + Tidying is *not about changing the attributes of the data* such as variable type or the values of the observations or missing data.
+  + That is called  **cleaning the data**
+- Today is about reshaping our data set to be in tidy format
+- We will use the tidyr package to make data tidy.
+- The tidyr package is part of the tidyverse. It is installed with it and also loaded and attached when you `library(tidyverse)`
+- Note, tidyr has two relatively new functions, `pivot_longer()` and `pivot_wider()`, which replace functions called `gather()` and `spread()` that are now deprecated. They still work and you will see them in web searches but they are not as capable as the new functions so we will focus on the new functions.
+- Let's load the tidyverse
+    ```{r, message = FALSE}
+    library(tidyverse)
+    ```
+
+#### Examples of tidy and untidy data
+- Let's look at multiple data sets on on wine consumption and population by country and year.
+- You will see there are many ways to be untidy.
+- We'll start with a tidy version of the data
+
+- **Tidy Data** 
+  + Units: Combinations of a Country and a Year - Note neither is an attribute of the other
+  + Variables: Country, Year, Cases Consumed, and Population
+  + One variable in each column and one observation for each unit in each row
+  
+    ```{r}
+    tidyr::table1
+    ```
+
+- **Untidy data** where variables are combined in one column
+  + Same units and information but, ...
+  + Two variables are in one column - `type` and their values are also in one column - `count`
+  + They are not different levels of the same variable
+    ```{r}
+    slice_head(tidyr::table2, n = 12)
+    ```
+    
+- **Untidy data** where observations are combined into one column-  `rate`
+    ```{r}
+    tidyr::table3
+    ```
+    
+- **Untidy data** where data of interest are spread across two data frames. 
+  + Within each data frame, a variable is split into multiple columns.
+
+    ```{r}
+    tidyr::table4a
+    tidyr::table4b
+    ```
+#### Why Tidy Data    
+
+- When data is tidy, it is shaped as individual vectors, usually columns in a data frame,
+- R and its tidyverse packages are designed to make it easy for you to manipulate vectors. 
+- Sometimes it is easy to determine the units and the variables and the appropriate shape.
+- Sometimes it is hard. 
+  + Talk with domain experts or the data collectors to find out the context with respect to the questions you are trying to answer. 
+  + Can you distinguish the response variable(s) and potential explanatory variables?
+
+- In the long run, tidy data makes your life easier.
+- Let's look at ways we can tidy our data.
+    
+### Reshaping with `pivot_longer()` (Replaces `gather()`)
+
+#### Problem: One Attribute (implied variable) Appears In Multiple Columns.
+
+- Column names are actually *values* of a implied variable
+
+- Examples in `table4a` and `table4b`
+
+#### Solution: `pivot_longer()` to Convert Columns to Rows i.e., Make the Data Set Longer
+- Look at help for `pivot_longer()`
+- The first argument is the dataset to reshape (which you can pipe in)
+- The second argument `cols = ` describes which columns need to be reshaped. 
+  + You can use any of the tidyselect tidy helper functions, e.g., `starts_with()` or `num_range()` 
+  + See "select" in help.
+- The `names_to = ` is the name of the variable you want to create to hold *the column names*.
+- The `values_to = `is the name of the variable you want to create to hold *the cell values*.
+
+- Hadley's visualization:
+
+![](./images/tidy-9.png)\ 
+
+- You have to specify three of the `pivot_longer()` arguments:
+  1. The columns that are values, not variables, with `cols = `
+  2. The name of the *new* variable with the old *column names*  (`names_to`), and
+  3. The name of the *new* variable with the *values* spread across the current column cells (`values_to`).
+  
+    ```{r}
+    tidyr::table4a
+    tidyr::table4a %>%
+      pivot_longer(cols = c(`1999`, `2000`), 
+                   names_to = "Year", 
+                   values_to = "Cases" ) ->
+      tidy4ap
+    tidy4ap
+    ```
+    
+    ```{r}
+    tidyr::table4b
+    tidyr::table4b %>%
+      pivot_longer(cols = c('1999', '2000'), 
+                   names_to = "Year", 
+                   values_to = "Population") ->
+      tidy4bp
+    tidy4bp
+    ```
+    
+- We will learn next class how to *join* two data frames but for now we will use `dplyr:: left_join()`
+- You can also use `dplyr::bind-cols` when the number of rows is the same in each data frame.
+    ```{r}
+    left_join(tidy4ap, tidy4bp)
+    bind_cols(tidy4ap,Population = tidy4bp$Population) # not guaranteed to work if different nrow()
+    ```
+  
+
+##### Exercises
+1. Tidy the `monkeymem` data frame (available at https://dcgerard.github.io/stat_412_612/data/monkeymem.csv). The cell values represent identification accuracy of some objects (in percent of 20  trials).
+
+    ```{r,  }
+    monkeymem <- read_csv("./data/monkeymem.csv")
+    #monkeymem <- read_csv("https://dcgerard.github.io/stat_412_612/data/monkeymem.csv")
+    head(monkeymem)
+
+    monkeymem %>% 
+      pivot_longer(cols = Week2:Week16, 
+                   names_to = "Week", 
+                   values_to = "Percent")
+    ```
+
+  
+2. Why does this code fail?
+
+    ```{r, eval = FALSE, error = TRUE}
+    table4a %>% 
+      pivot_longer(cols = 1999, 2000, 
+                   names_to = "year", 
+                   values_to = "cases")
+    ```
+
+    ```{block, type = "HTML", echo = params$solutions}
+    1999 and 2000 are prohibited variable names. You can get around this by surrounding them with single quotes and combining into a character vector as in our prior example.
+    ```
+
+#### Other Arguments (see help)
+
+- Use `names_prefix	=` with a regular expression (REGEX) for text you want to remove from the start of each variable name, e.g., "FY". 
+  + We will learn more about REGEX in a few weeks with stringr
+  + For now, just keep simple with specific letters or numbers.
+- Use `names_ptypes =` and   `values_ptypes = ` with a *list* of of column name-prototype pairs to *confirm* the type, class, and attributes of a newly created vector. 
+  + If not specified, the type of the columns generated from `names_to` will be character, and 
+  + The type of the variables generated from `values_to` will be the common type of the input columns used to generate them.
+- Use `values_drop_na	=TRUE` to *drop rows that contain only `NA`s* in the value_to column.
+- You can also use `names_transform =` or `values_transform =` to *change* the type of the new column. 
+    ```{r}
+    tidyr::table4b
+    # Make Year a Factor
+    tidyr::table4b %>%
+      pivot_longer(cols = c(`1999`, `2000`),
+                   names_to = "Year", 
+                   values_to = "Population",
+                   names_ptypes = list(Year= factor())
+                   )
+  # Make Year an integer   
+   tidyr::table4b %>%
+     pivot_longer(cols = c(`1999`, `2000`), 
+                  names_to = "Year", 
+                  values_to = "Population",
+                  names_transform = list(Year= as.integer)
+                  )
+    ```
+
+
+### Reshaping with `pivot_wider()` (replaces `spread()`)
+
+#### Problem: One Observation's Attributes Appear in Multiple rows.
+
+- One column contains variable names. 
+- One column contains values for the different attributes i.e., implied variables.
+- This can be more challenging to tidy as you have multiple variables to address
+
+- Example is `table2`
+
+#### Solution: `pivot_wider()` to Convert Rows to Columns, i.e., Make the Data Set Wider
+- See help for `pivot_wider()`
+- The first argument is the data frame to pivot.
+- `id_cols=` specifies the set of columns which together uniquely identify each observation. 
+  + Usually the default is okay. 
+  + It uses all the other columns in the data *except* for the columns in `names_from` and `values_from`. 
+- `names_from =`  says which column (or columns) to use to get the new variable name of the output columns.
+- `values_from =`	says which column (or columns) to use to get the cell values from for the new variables.
+
+- Hadley's visualization:
+
+![](./images/tidy-8.png)\
+
+- Specify at least two arguments in addition to the data frame:  
+  1. The column with the column names (`names_from =`), and 
+  2. The column with the values (`values_from = `).
+
+    ```{r}
+    table2
+    table2 %>%
+      pivot_wider(names_from = type, 
+                  values_from = count)
+    ```
+
+
+##### Exercises: 
+
+1. Tidy (reshape) the `flowers1` data frame (available at https://dcgerard.github.io/stat_412_612/data/flowers1.csv).
+
+    ```{r,  echo = params$solutions}
+    flowers1 <- read_csv2("./data/flowers1.csv")
+    flowers1 <- read_csv2("https://dcgerard.github.io/stat_412_612/data/flowers1.csv")
+    slice(flowers1,20:28)
+    
+    flowers1 %>% 
+      pivot_wider(names_from = Variable, 
+                  values_from = Value )
+    ```
+    
+
+2. (RDS 13.3.3.3): Why does using pivot_wider on this data frame fail?
+
+    ```{r, eval = FALSE}
+    people <- tribble(
+      ~name,             ~key,    ~value,
+      #-----------------|--------|------
+      "Phillip Woods",   "age",       45,
+      "Phillip Woods",   "height",   186,
+      "Phillip Woods",   "age",       50,
+      "Jessica Cordero", "age",       37,
+      "Jessica Cordero", "height",   156
+    )
+    ```
+    
+    ```{block, type = "HTML", echo = params$solutions}
+    There is a duplicate row for "Phillip Woods" and "Age". 
+    So in the "Phillip Woods" row and "age" column, should we put in 45 or 50?  
+    `pivot_wider()` doesn't know what to do so it throws an error.
+    ```
+
+### `separate()` Combined Data Values
+
+#### Problem: One Column Contains Values from Two (or more) Variables in Each Row.
+
+- Example is `table3`
+
+#### Solution: `separate()`
+- See help for `separate()`
+- First argument is the data frame (from `%>%` usually)
+-  `col = ` the name or position of the column to be separated
+- `into = ` a character vector of the names of the new variables. 
+  + You can use `NA` to drop one that is not of interest
+- `sep = ` The separator you want to use to split the data into new columns
+  + If a character, e.g. "-" seen as a REGEX (beware of backslashes, periods, ...). 
+  + If a numeric, the positions where to split the data
+    - If positive, counting from left to right 
+    - If negative, counting from right to left 
+    - Should have `length(sep)` = `length (into) -1`
+  
+- Hadley's visualization:
+
+![](./images/tidy-17.png)\
+    
+- You need to specify at least three arguments:  
+  1. The column you want to separate that has two (or more) variables,
+  2. The character vector of the names of the new variables, and
+  3. The character or numeric positions by which to separate out the new variables from the current column.
+         
+    ```{r}
+    head(table3)
+    table3 %>%
+      separate(rate, 
+               into = c("cases", "population"), 
+               sep = "/")
+    ```
+
+
+##### Exercise 
+1. Tidy the `flowers2` data frame (available at 
+  https://dcgerard.github.io/stat_412_612/data/flowers2.csv).
+    ```{r,  echo = params$solutions}
+    flowers2 <- read_csv2("./data/flowers2.csv")
+    #flowers2 <- read_csv2("https://dcgerard.github.io/stat_412_612/data/flowers2.csv")
+    head(flowers2)
+    
+    flowers2 %>%
+      separate(col = `Flowers/Intensity`, 
+               into = c("Flowers", "Intensity"), 
+               sep = "/") ->
+      flowers2_sep
+    
+    flowers2_sep
+    ```
+
+
+
+### `unite()` Values from Multiple Columns to Create a New Variable
+
+#### Problem: One Variable Spread Across mMltiple Columns.
+- This is a much less common problem.
+- You can see it with dates and/or times
+- Example has Year split into century and two-digit year
+    ```{r}
+    table5
+    ```
+
+#### Solution: `unite()` Multiple Columns to Create a New Variable
+- See help for `unite()`
+- Note you can either remove (the default) or keep the original columns
+- Hadley's visualization:
+
+![](./images/tidy-18.png)\
+    
+
+
+- You must specify three arguments:
+
+  1. The name of the new column (`col`),
+  2. The columns to unite, and
+  3. The separator of the variables in the new column (`sep`) if none use ("")  
+
+    ```{r}
+    table5 %>%
+      unite( col = "Year", 
+             century, year, 
+             sep = "")
+    ```
+    
+##### Exercises 
+1. Re-unite the data frame you separated from the `flowers2`  exercise.
+- Use a comma for the separator.
+  
+    ```{r}
+    flowers2_sep %>%
+      unite(col = "Flowers,Intensity", 
+            Flowers, Intensity, 
+            sep = ",")
+    ```
+  
+2. Use the flights data from the nycflights13 package.
+- Select the month, day, hour and minute.
+- Combine the hour and minute into a new variable `sd_time` and convert into a time object 
+- What happened and why?
+- We can fix using the stringr package (a few weeks from now)
+
+    ```{r}
+    
+    nycflights13::flights %>% 
+      select(month, day, hour, minute) %>% 
+      unite(col = "sd_time",
+            hour, minute,
+            sep = ":", remove = FALSE) %>% 
+      mutate(sd_time = parse_time(sd_time, format = "%H:%M")) %>% 
+      slice_head(n=10)
+    
+    # With a fix
+    nycflights13::flights %>% 
+      select(month, day, hour, minute) %>% 
+      mutate(minute = paste0("0",minute),
+             minute = str_sub(minute, -2)) %>% 
+      unite(col = "sd_time",
+            hour, minute,
+            sep = ":", remove = FALSE) %>% 
+      mutate(sd_time = parse_time(sd_time, format = "%H:%M"))
+    ```
+
+
+## References 
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc. 
+* [Chapter 12](https://r4ds.had.co.nz/workflow-projects.html)
+  + [Data Import Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/data-import.pdf)
+  + [Tidyr Overview](https://tidyr.tidyverse.org/).
+  + [Pivot Vignette](https://tidyr.tidyverse.org/articles/pivot.html)

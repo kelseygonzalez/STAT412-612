@@ -1,5 +1,30 @@
 h1:joins Relational Data and joins
 h2:lecture-notes Lecture Notes
+h3:relational-data Relational Data
+h4:example-the-nyc-flights-data-set-actually-has-multiple-tables Example: The NYC Flights Data Set Actually has Multiple Tables
+h5:each-table-has-one-purpose-to-describe-one-type-of-unit Each Table has One Purpose: To Describe One Type of Unit
+h5:these-tables-are-logically-connected These Tables are Logically Connected
+h3:we-define-variables-as-keys-to-identify-rows-and-to-make-logical-connections-between-tables. We Define Variables as  to Identify Rows and to Make Logical Connections Between Tables.
+h5:exercise-rds-13.3.1.2 Exercise ( 13.3.1.2):
+h3:join-functions-in-the-dplyr-package Join Functions in the dplyr Package
+h4:mutating-joins-inner-left-right-full Mutating Joins: Inner, Left, Right, Full
+h4:filtering-joins-filter-rows-in-the-left-x-data-frame Filtering Joins Filter Rows in the Left () Data Frame:
+h4:nesting-joins-create-a-list-column-of-data.frames Nesting joins create a list column of data.frames
+h3:joins-in-pictures Joins in Pictures
+h4:inner_joinx-y 
+h5:exercise Exercise:
+h4:outer-joins-left-right-full Outer Joins: Left, Right, Full
+h5:left_joinx-y 
+h5:right_joinx-y 
+h5:full_joinx-y 
+h5:exercise-1 Exercise:
+h4:duplicate-keys Duplicate Keys
+h5:exercise-2 Exercise:
+h4:semi_joinx-y 
+h4:anti_join 
+h5:exercise-3 Exercise:
+h3:other-key-names Other Key Names
+h5:exercise-is-there-a-relationship-between-the-age-of-a-plane-and-its-delays Exercise: Is there a relationship between the age of a plane and its delays?
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

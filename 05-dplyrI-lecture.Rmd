@@ -1,0 +1,1252 @@
+---
+title: 'STAT 412/612 Class 8: Wrangling with dplyr'
+author: "Kelsey Gonzalez"
+date: "2/15/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+
+![](images/dplyr_wrangling.png)
+
+![](images/dplyr_mutate.png)
+![](images/dplyr_filter.jpg)
+![](images/dplyr_relocate.jpg)
+![](images/)
+![](images/)
+![](images/)
+
+
+# Data Transformation with dplyr I
+- Real world data is always messy to start
+  + Variables may be missing
+  + Values may be missing
+  + There can be duplicate rows
+  + Variables may have different names in different tables for the same attribute
+  + Numbers can be stored as characters
+  + The data may be structured for ease of human input rather than analysis
+  + Unsorted or sorted in a different order than we want  
+
+- The tidyverse `dplyr` package provides tools to *speed up the manipulation of data*
+  + Uses data frames to create consistent structure
+  + Uses the forward pipe operator, `%>%`, to facilitate transparency/readability
+  + Compared to the predecessor `plyr` library, `dplyr` is 20X - 100X faster
+  + Enables faster Exploratory Data Analysis (EDA) with `ggplot2`
+
+Learning Outcomes:
+
+- Describe data frames in R and tidyverse tibbles
+- Use basic functions of dplyr to manipulate single data frames/tibbles by rows, by columns (variables), and by groups
+  + Choose rows by column (variable) values `filter()`
+  + Choose rows by position: `slice()`
+  + Arrange (sort) rows by column (variable) values: `arrange()`
+  + Choose columns (variables) by names `select()`
+  + Rename columns (variables): `rename()`
+  + Add/modify new/existing columns (variables): `mutate()` or `transmute()`
+  + Group rows by columns (variables): `group_by()`
+  + Calculate summary statistics of Columns with or without grouping. `summarize()`, `group_by()`
+
+# Introduction to the `dplyr`package
+
+## Background on Data Frames and Tibbles
+
+- The R language uses two kinds of vectors to manage data: **Atomic Vectors** and **Lists**
+  - **Atomic vectors** are sequences of elements of the same data *type*.
+  - **Lists** are data structures where the elements do Not have to be the same type
+- Vectors have two main attributes: *Length* and data *Type*
+
+- R has six data types:  
+    1. logical,
+    2. integer,
+    3. double,
+    4. character,
+    5. complex, and
+    6. raw(byte-level data).
+- Integer and double vectors are collectively known as *numeric vectors*
+
+### Data Frames
+- A **data frame** in R is a special kind of list: a data.frame object
+- Every element in a data.frame is an atomic vector with the same length
+  + This means data frames are rectangular matrices of columns and rows.
+  + The columns can be of different types
+  + The elements within each column must be the same type
+  + Each column has the same number of rows
+  + Some rows may be missing the value for a given column. They should have `NA` in the row for that column.
+
+- Consider a set of data about a number of *observational or experimental units*
+  + In `mpg` the cars were the observational units - the things on which someone collected data.
+- The data set includes information on different attributes or characteristics of the units.
+- These attributes are called the *variables* as their values can change from unit to unit.
+- These **variables are the columns** of the data frame.
+  + In `mpg` these are:
+  + `r names(ggplot2::mpg)`
+- The **observed values for each of the attributes are the rows**.
+  + for `mpg` the first row of observations are:
+  + `r head(ggplot2::mpg,1)`
+- For example, in the `msleep` data frame, the observations are animals and the the variables are properties of those animals (body weight, total sleep time, etc).
+- You can create data frames using the `data.frame()` or `as.data.frame()`
+
+### Tibbles
+- **Tibbles** are a tidyverse version of an R data.frame class of object.
+- They have all the same features as a regular R data frame with a few nicer attributes, e.g., for printing.
+- You can create tibbles with the functions `tibble::tibble()` or `as.tibble()`
+- You can create small tibbles with `tibble::tribble()`
+- Since we were are focused on the tidyverse, we will use the terms data frame and tibble as synonyms for each other in general usage.
+
+- **Data frames/tibbles are the fundamental data type in most analyses.**
+- Many people work with data in table-like structures such as data frames
+  + A data frame is similar to a "Named Range" on an Excel worksheet where the first row contains the variable names
+  + A data frame is similar to a database table
+
+## The dplyr Package
+- The dplyr package is a tidyverse package
+- It is installed and loaded with the tidyverse package and can be installed/loaded on its own as well.
+- The dplyr package is designed to enable users to manipulate or transform data in data frames/tibbles.
+- To goal is to support users by using a consistent "grammar of data", leading to faster and more reliable results.
+- dplyr's functions have names similar to those in other data manipulation tools or languages, e.g., SQL (Structured QUery Language), so it is easier to learn and apply.
+
+## dplyr Functions Support Common Manipulations/Transformations/Operations on Data and Data Frames
+- Common operations on a data frame during an analysis include:
+  - Select specific variables: `select()`
+  - Choose specific observational units based on the values of their attributes: `filter()`
+  - Create new variables or modify existing variables: `mutate()`
+  - Reorder the observational units: `arrange()`
+  - Create summary statistics from many observational units: `summarize()`
+  - Group the observational units by the values of some variables: `group_by()`
+
+- Think of the dplyr functions (like other functions) as "verbs" that do things with the data.
+- We can characterize them base on the component of the data set they work with: (**bold** are the most commonly used)
+- **Rows**:
+  + **`filter()`** chooses rows based on column values.
+  + `slice()` chooses rows based on location.
+  + **`arrange()`** changes the order of the rows.
+- **Columns**:    
+  + **`select()`** changes whether or not a column is included.
+  + `rename()` changes the name of columns.
+  + **`mutate()`** changes the values of columns and creates new columns.
+  + `relocate()` changes the order of the columns.
+- **Groups of rows**:
+  + **`summarize()`** collapses a group into a single row.
+
+- These are all "Single Table" verbs meaning they operate on a single data frame.
+- There are more dplyr functions (verbs) as well
+- Next week in dplyr Part 2 we will address additional functions (verbs) for working across rows and columns
+- Later on in the course we will address dplyr verbs for reshaping data frames and working with two data frames at once.
+
+## An Example of dplyr Operations with the `nycflights13` Package and its `flights` Data Frame
+- We will go into each of the functions and steps in these examples in great detail after this initial example
+- Install the `nycflights13` package (using the console)
+- Then load the tidyverse package and nycflights13 package and the `flights` data that comes with the package:
+    ```{r}
+    #install.packages("nycflights13") # only in the console!!
+    library(tidyverse)
+    library(nycflights13)
+    data("flights")
+    class(flights)
+    help(flights)
+    head(flights)
+    nrow(flights)
+    ```
+
+- Suppose we want to calculate the *average departure delay* for the flights *from each carrier* in the *second half of the year*. The steps would be:
+
+  1. Get only the flights from the second half of the year.
+  2. Group the flights by the carrier.
+  3. Calculate the average departure delay time for each carrier's flights.
+
+- In base R, this operation would look like:
+
+    ```{r, eval = FALSE}
+    flights2 <- flights[flights$month >= 7,] # extract the rows
+    flights3 <- aggregate(dep_time ~ carrier, FUN = mean, data = flights2) # model dep_time as a function of carrier and calculate the mean and save in a new variable
+    flights3
+    ```
+
+- In tidyverse, this looks like
+
+    ```{r, eval = FALSE}
+    flights %>%
+      filter(month >= 7) %>% #choose only those rows in months July or later and pipe to the next function
+      group_by(carrier) %>% # calculate based on the name of each carrier and pipe to the next function
+      summarize(mean_dep = mean(dep_time, na.rm = TRUE)) # create a new variable with the average for each group after removing any missing values
+    ```
+
+- Note the value of piping in the tidyverse:
+  + It's more expressive/clear so it's easier to follow one's own (or someone else's) logic.
+  + It's also easier to diagnose/debug:
+      + you can temporarily insert commands in between pipes such as `str()` or `view()`
+      + `CMD+SHIFT+C` to comment out blocks of code (on a Mac, `CTRL+SHIFT+C` on a PC)
+
+Now let's go through a number of dplyr package functions
+
+# `filter()`
+
+## Choose Rows Based on Values of Certain Variables
+
+- The dplyr `filter()` function allows us to choose (subset/extract) only certain rows (observations) based on the values of the variables in those rows.
+
+- We create conditions and `filter()` selects the rows satisfying these conditions (return `TRUE`).
+  + We can use logical comparisons, and use AND (`&`) or OR (`|`) as well
+- Let's extract all the flights from New York that occurred in January or the 1st month of the year.
+
+    ```{r, eval = FALSE}
+    flights %>%
+      filter(month == 1)
+    ```
+
+## `filter()` on Two or More Variables by using Logical Operators.
+
+- Graphical depiction of logical operations:
+- Blue is TRUE (to be included) and White is FALSE (not included)
+- `!` means Not (!TRUE means FALSE)
+- `xor` means the exclusive OR, i.e., X or Y but not Both
+    ```{r, echo = FALSE, fig.height=4.5, fig.width=6}
+    suppressPackageStartupMessages(library(gridExtra))
+    plot_venn <- function(col1, col2, col3, col4, title, alpha = 0.5) {
+        x1 <- seq(-1, 1, length = 300)
+        y1 <- sqrt(1 - x1 ^ 2)
+        y2 <- -sqrt(1 - x1 ^ 2)
+        x2 <- x1 + 0.5
+        x1 <- x1 - 0.5
+
+        circdf1 <- data.frame(y = c(y1, y2[length(y2):1]), x = c(x1, x1[length(x1):1]))
+        circdf2 <- data.frame(y = c(y1[length(y1):1], y2), x = c(x2[length(x2):1], x2))
+
+        poly1 <- data.frame(x = c(x1[x1 < 0],
+                                  x2[x2 < 0][sum(x2 < 0):1],
+                                  x2[x2 < 0],
+                                  x1[x1 < 0][sum(x1 < 0):1]),
+                            y = c(y1[x1 < 0],
+                                  y1[length(y1):1][x2 < 0][sum(x2 < 0):1],
+                                  y2[length(y2):1][x2 < 0],
+                                  y2[x1 < 0][sum(x1 < 0):1]))
+        poly2 <- poly1
+        poly2$x <- poly1$x * -1
+
+        poly3 <- data.frame(x = c(x2[x2 < 0][sum(x2 < 0):1],
+                                  x2[x2 < 0]),
+                            y = c(y1[length(y1):1][x2 < 0][sum(x2 < 0):1],
+                                  y2[length(y2):1][x2 < 0]))
+        tempdf <- poly3[nrow(poly3):1, ]
+        tempdf$x <- tempdf$x * -1
+        poly3 <- rbind(poly3, tempdf)
+        ggplot() +
+          geom_polygon(data = poly1,
+                       mapping = aes(x = x, y = y),
+                       fill = col1,
+                       color = "black",
+                       alpha = alpha) +
+          geom_polygon(data = poly2,
+                       mapping = aes(x = x, y = y),
+                       fill = col3,
+                       color = "black",
+                       alpha = alpha) +
+          geom_polygon(data = poly3,
+                       mapping = aes(x = x, y = y),
+                       fill = col2,
+                       color = "black",
+                       alpha = alpha) +
+          theme_void() +
+          ggtitle(title) +
+          theme(plot.title = element_text(hjust = 0.5),
+                plot.background = element_rect(color = col4)) +
+          annotate(geom = "text", x = -0.8, y = 0, label = "x") +
+          annotate(geom = "text", x = 0.8, y = 0, label = "y") ->
+          pl
+      return(pl)
+    }
+
+    aval <- 1
+    col <- "#b1d9ef"
+    grid.arrange(
+      plot_venn(col, "white", "white", "white", "x & !y", alpha = aval),
+      plot_venn("white", col, "white", "white", "x & y", alpha = aval),
+      plot_venn("white", "white", col, "white", "!x & y", alpha = aval),
+      plot_venn(col, col, "white", "white", "x", alpha = aval),
+      plot_venn(col, "white", col, "white", "xor(x, y)", alpha = aval),
+      plot_venn("white", col, col, "white", "y", alpha = aval),
+      plot_venn(col, col, col, "white", "x | y", alpha = aval)
+    )
+    ```
+
+- Example: Let's get all flights that were both in January **and** from JFK.
+
+    ```{r, eval = FALSE, echo = FALSE}
+    flights %>%
+      filter(month == 1 & origin == "JFK")
+    ```
+
+- If you don't know the possible values of a categorical variable, you have two options:
+
+  1. If the variable is a factor, use `levels()`
+  2. Otherwise, use `unique()`
+
+    ```{r}
+    levels(as.factor(flights$origin)) #what happens without as.factor in this case
+    unique(flights$origin)
+    ```
+
+- The *And* operator is the most commonly used. So, if you just separate the logical conditions by a comma, `filter()` will **perform the *And* operation by default** .
+
+    ```{r, eval = FALSE}
+    flights %>%
+      filter(month == 1, origin == "JFK")
+    ```
+
+- You should still know the logical operators in case the filtering gets complicated.
+
+- Let's extract the January LGA flights and the December JFK flights.
+
+    ```{r, eval = FALSE}
+    flights %>%
+      filter((month == 1 & origin == "LGA") | (month == 12 & origin == "JFK"))
+    ```
+
+### Exercises
+
+1. Extract all flights occurring in odd months, or, on even days of even months.
+    ```{r,  }
+    flights %>%
+      filter((month %% 2 == 1) | (month %% 2 == 0 & day %% 2 == 0))
+    ```
+
+2. (RDS 5.2.4.1) Find all the flights that satisfy all of the following conditions:
+
+  1. Flew to Houston (IAH or HOU)
+  2. Were operated by United, American, or Delta (UA, AA, or DL)
+  3. Departed in summer (July, August, and September)
+  4. Arrived more than fifteen minutes late, but didn't leave late
+- Remember to break lines after commas    
+    ```{r,  }
+    flights %>%
+      filter(dest == "IAH" | dest == "HOU",
+             carrier == "AA" | carrier == "DL" | carrier == "UA",
+             month %in% 7:9,
+             arr_delay > 15,
+             dep_delay <= 0
+             )
+    # Note the starting a new line of the arguments after the commas
+    ```
+
+## Missing Values
+
+- **`filter()` will exclude observations with missing values**.
+- If you want to extract those rows as well, you have to ask for them explicitly using `is.na()`.
+
+    ```{r}
+    dfdat <- data.frame(x = c(1, NA, 2),
+                        y = c(2, 4, 1))
+    dfdat %>%
+      filter(x == 1)
+
+    dfdat %>%
+      filter(x == 1 | is.na(x))
+    ```
+
+- **You cannot use `NA == NA`**. If two observations are missing, then you don't
+  know if they are equal, so R will return `NA` to this:
+
+    ```{r}
+    NA == NA
+    ```
+
+## `near()`
+
+- Unless you explicitly tell it, R treats all numerics as floats (with a limited number of decimal points).
+
+- It's thus dangerous to use `==` for numerics.
+
+- Instead, use the `near()` function.
+
+    ```{r}
+    sqrt(2) ^ 2
+    sqrt(2) ^ 2 == 2
+    near(sqrt(2) ^ 2, 2)
+    print(sqrt(2)^2, digits = 22)
+    print(exp(2*log(sqrt(2))), digits = 22)
+    ```
+
+- If a variable is an integer `<int>`, then it's OK to use `==`
+
+    ```{r}
+    twoint <- as.integer(sqrt(2) ^ 2)
+    twoint == 2
+    ```
+
+
+# `slice()`
+## Choose Rows based on their Position in the Data Frame
+- You can select certain rows of a data frame using the `slice()` function.
+- `slice()` lets you index rows by their (integer) locations.
+- It allows you to select, remove, and duplicate rows.
+
+- Choose contiguous rows 5 through 10
+    ```{r}
+    flights %>%
+      slice(5:10)
+    ```
+- Choose rows with specific row numbers
+    ```{r, eval = FALSE}
+    flights %>%
+      slice(c(1, 4, 6))
+    ```
+ - Choose rows from  row 10 to the end
+ - Note the use of `n()` to count the number of rows
+    ```{r, eval = FALSE}
+    flights %>%
+      slice(10:n())
+    ```
+
+## Choose Rows from the Top or the Bottom of the Data Frame
+- `slice_head()` and `slice_tail()` select the first or last rows.
+- Argument `n= ` allows you to choose how many
+
+    ```{r}
+    flights %>%
+      slice_head()
+
+        flights %>%
+      slice_head(n=3)
+    ```
+
+    ```{r}
+    flights %>%
+      slice_tail()
+
+        flights %>%
+      slice_tail(n=3)
+    ```
+
+### Exercises
+1. Find rows 10, 100, 1000, 10,000, and 100,000
+
+    ```{r,  }
+    flights %>%
+      slice(10, 100, 1000, 10,000, 100000)
+
+    flights %>%
+      slice(c(10, 100, 1000, 10,000, 100000))
+
+    flights %>%
+      slice(10^seq(1:5))
+    ```
+
+2. Find the last 10 rows out of the first 30 rows of departures from Newark Airport
+    ```{r,  }
+    flights %>%
+      filter(origin == "EWR") %>%
+      slice_head(n = 30) %>%
+      slice_tail(n=10)
+
+    # DIfferent interpretation of the question
+    # Find the flights from EWR out of the last 10 rows from the first thirty departures
+    flights %>%
+      slice_head(n = 30) %>%
+      slice_tail(n=10) %>%
+      filter(origin == "EWR")
+
+
+    flights %>%
+      filter(origin == "EWR") %>%
+      slice(21:30)
+    ```
+
+
+## Choose Rows Based on a Random Sample
+
+- `slice_sample()` randomly selects rows.
+- Use the argument `n= ` to identify the number of rows you want or
+- Use the argument `prop= `to identify the proportion of the rows you want.
+
+    ```{r}
+    flights %>%
+      slice_sample()
+
+    flights %>%
+      slice_sample(n = 200)
+
+        flights %>%
+      slice_sample(prop = .1)
+    ```
+
+## Choose Rows Based on their Values Relative to the Max or Min of the Data Frame
+
+- `slice_min()` and `slice_max()` select rows with highest or lowest values of a variable.
+- You identify the variable with `order_by = ` and you must first remove any rows with `NA` for that variable.
+- **Warning!**: `slice_min()` and `slice_max()` may return more rows than requested if there are ties. - Use with_ties = FALSE to suppress
+    ```{r}
+    flights %>%
+      filter(!is.na(arr_delay)) %>%
+      slice_max(arr_delay)
+
+    flights %>%
+      filter(!is.na(arr_delay)) %>%
+      slice_max(arr_delay,n=5)
+
+     flights %>%
+       filter(!is.na(arr_delay)) %>%
+       slice_min(arr_delay)
+
+    flights %>%
+      filter(!is.na(arr_delay)) %>%
+      slice_min(arr_delay,n=5)
+    ```
+
+### Exercises
+1. Set the seed to 1 and select a random sample of 1% of the rows and a second sample of 3367 rows. Are the last 10 rows the same between the samples? Why or why not??
+
+    ```{r,  }
+    set.seed(1)
+    flights %>%
+      slice_sample(prop = .01) %>%
+      tail(n=10)
+
+    #set.seed(1)
+    flights %>%
+      slice_sample(n = 3367)  %>%
+      tail(n=10)  
+    ```
+
+2. Find the flights with the ten smallest arrival delays out of the 50 longest air times.
+- What about for air times less than 300 minutes?
+- **This is tricky but shows some of the nuances of dealing with max and min values!**
+
+    ```{r,  }
+    flights %>%
+      slice_max(air_time, n=52) %>%  # arrange(-air_time)
+      # Get 51 rows due to a tie between 50 and 51.
+      # The slice is in row number order which follows the order of the data frame
+      # So since month is ordered 1, 10, 11, 12, 2, 3, 4,...9, the 50th row is from
+      # month 11 and the 51st is from month 3
+      # If you set n = 52, you get 58 rows and can see the seven ties for 52 go
+      # in month order of 1, 1, 11, 3, 3, 3, 6
+      slice_min(arr_delay, n=10)
+    # If you look at the source code for slice_max(), it uses 'head()` and
+    # sorts ties using min_rank()
+
+    # Use `with_ties = FALSE` to get exactly the first 50 rows
+    flights %>%
+      slice_max(air_time, n=50, with_ties = FALSE) %>% arrange(-air_time)
+    # get exactly 50 rows - again based on the row order in the original data frame
+
+    # --------- Air Times < 300 ------------------------------------------------
+    # Attempt 1 - just do a logical comparison in the slice_max call
+    flights %>%
+      slice_max(air_time < 300, n=50) %>%  #nrow() #= 283250 - NOT 50
+      # This is because `air_time < 300` is a logical comparison so returns TRUEs and FALSES
+      # `slice_max()` uses this result as the `order_by` argument since it is un-named and in the second position
+      # All 283250 rows with air_time <300 are TRUE, so have value 1, so are tied, so not 50!
+      # Using `with_ties = FALSE` will get the first 50 rows but they will not be based
+      # on the max value of air_time, just the first 50 rows with air_time <300 which
+      # are all on January 1
+      slice_min(arr_delay, n=10) %>% arrange(air_time)
+    # this gives a bad answer since it is not the min arr_delay from the top 50 air_times <300
+    # but from all flights with air times <300 (or just the first 50 from 1 Jan)
+
+    # Attempt 2 -Filter the rows first
+    flights %>%
+      filter(air_time<300) %>% #nrow() #= 283250 as before so what we want
+      slice_max(air_time, n=50) %>% arrange(air_time) %>% #nrow() #= 399! Again Not 50
+      # This time it is because there are 399 flights with an air_time of 299
+      # or the max time <300 is 299 ties
+      slice_min(arr_delay, n=10) %>% arrange(air_time)
+    # this gives a valid answer to the question
+    # For flights with an air_time < 300, what are the ten lowest arrival
+    # delays for all flights with an air time in the highest 50 air times
+    # In this case, the 299 air_time covers all 50 of the highest air times
+    # and actually has 399 flights
+
+    # Check number of flights with air_time = 299
+    flights %>%
+     filter(air_time == 299) %>%
+     nrow()
+
+    # Attempt 3: Filter and limit to the first 50 rows
+    flights %>%
+      filter(air_time<300) %>%
+      slice_max(air_time, n=50, with_ties = FALSE) %>%  # nrow() #= 50
+      slice_min(arr_delay, n=10) %>% arrange(air_time)
+    # this gives a valid answer to the question
+    # For flights with an air_time < 300, what are the ten lowest arrival
+    # delays for the first 50 flights with the highest 50 air times
+    # (first is defined as the earliest appearance in the original data frame
+    # of flights meeting the conditions)
+
+
+    # Attempt 4: Filter and arrange and limit to the first 50 rows
+    flights %>%
+      filter(air_time<300) %>%
+      arrange(year, month, day, dep_time) %>%
+      slice_max(air_time, n=50, with_ties = FALSE) %>%  # nrow() #= 50
+      slice_min(arr_delay, n=10) %>% arrange(air_time)
+    # this gives a valid answer to the question
+    # For flights with an air_time < 300, what are the ten lowest arrival
+    # delays for the first 50 flights with the highest 50 air times
+    # (first is defined as the earliest 50 flights meeting the conditions)
+
+    # If you want to ask what about arr_delays for flights with the 50 highest
+    # "ranked" air times that is a more complicated question that depends on how you
+    # want to measure rank and how to select the representative value for arr_delay
+    # among those flights sharing a common rank - the average, the median, the
+    # 90th percentile, ...?
+
+    # Bottom Line - This is another example where you have to be precise about
+    # What is the precise question of interest and what are the assumptions
+    # that go with that question and how do they fit the data.
+    # It also shows that whenever you are looking for max and min values,
+    # especially with integer values, you have to be careful about how you deal
+    # with ties and the effect of the original order of the rows on your results.
+    ```
+
+# `arrange()`
+
+## Rearrange the Order of the Rows
+- The results from using `slice()` are not sorted so when you extract the top 10 rows, they are not in order.
+- Use `arrange()` to order rows by the value of one or more variables.
+- The sort order for character vectors will depend on the collating sequence of the locale in use: see help for `locales()`.
+
+    ```{r, eval = FALSE}
+    flights %>%
+      arrange(dep_delay)
+    ```
+
+- The **default is to arrange in ascending order** from top to bottom so the lowest number is on top.
+- **Use the `desc()` function on the variable inside `arrange()` to arrange in descending order**
+- For numerics you can use `-` instead
+    ```{r, eval = FALSE}
+    flights %>%
+      arrange(desc(dep_delay))
+
+    flights %>%
+      arrange(-dep_delay)
+
+    flights %>%
+      arrange(desc(carrier))
+    ```
+
+- If there are ties with one variable, you can **break the ties by arranging by another variable**.
+
+    ```{r}
+    flights %>%
+      arrange(dep_delay, arr_delay)
+
+    flights %>%
+      arrange(dep_delay, desc(arr_delay))
+
+
+    set.seed(10)
+    flights %>%
+      slice_sample(n=20) %>%
+      arrange(dest, origin)
+    ```
+
+- Observations with missing values are *always placed at the end* (even when using the `desc()` function)
+- Note: the flights data frame is in year, month, day,, departure time order **but the months are sorted as Characters not Integers**. The flights go in order of months 1, 10, 11, 12, 2, 3, ...9 and NA departure times are at the end of each day (a scheduled flight that was canceled so has NAs in several columns associated with an actual flight, e.g., arr_time)
+    ```{r, eval = FALSE}
+    flights %>%
+      arrange(dep_delay) %>%
+      tail()
+
+        flights %>%
+      arrange(desc(dep_delay)) %>%
+      tail()
+    ```
+
+
+### Exercises
+
+1. Arrange the flights data so the top row has the longest distance and break ties using air_time
+    ```{r,  }
+    flights %>%
+      arrange(desc(distance), air_time)
+
+     flights %>%
+      arrange(-distance, air_time)
+    ```
+
+2. Arrange the flights data by air time and then carrier and then in reverse order for each
+    ```{r,  }
+    flights %>%
+      arrange(distance, carrier)
+
+     flights %>%
+      arrange(-distance, desc(carrier))
+    ```
+
+# `select()`
+
+## Choose Specific Columns
+
+- The `select()` function extracts (subsets) variables (columns) and place them into a new smaller (temporary) data frame.
+
+- **Select specific variables by their names**
+
+    ```{r, eval = FALSE}
+    flights %>%
+      select(dep_delay, arr_delay)
+    ```
+
+- **Select a range** of contiguous (adjacent or sequential) variables with `:`
+
+    ```{r, eval = FALSE}
+    flights %>%
+      select(year:carrier)
+    ```
+
+- Select all variables **except certain ones** with `-`, the minus sign
+
+    ```{r, eval=FALSE}
+    flights %>%
+      select(-dep_delay, -arr_delay)
+    ```
+
+- Select all variables **except within a contiguous range of columns**.
+
+    ```{r, eval = FALSE}
+    flights %>%
+      select(-(year:day))
+    ```
+
+### Exercise
+1. Select the origin and destination columns two different ways
+    ```{r,  }
+    select(flights, origin:dest)
+    select(flights, 13:14)
+    select(flights, c(13,14))
+    ```
+
+2. Select the columns for carrier and tail number. How many combinations are there? How many different tail numbers are there?
+    ```{r,  }
+    select(flights, c("carrier", "tailnum")) %>%
+      unique() %>%
+      nrow()
+    length(unique(flights$tailnum))
+    ```
+
+## Helper Functions for `select()`
+- THere are several "helper functions" you can use as arguments inside `select()`
+  + These helper functions are actually part of the tidyselect package that is always installed and loaded with dplyr
+  + See help for "language" from tidyselect or help on "starts_with" from tidyselect
+- These helper functions reduce the need to specify each and every variable you want or don't want.
+  + Some data frames may have 1000s of variables in them
+- Variables names in a data frame are always character strings so the helper functions compare the variable names to the character patterns you provide.
+
+- `starts_with("abc")`: matches names that begin with `"abc"`.
+
+- `ends_with("xyz")`: matches names that end with `"xyz"`.
+
+- `contains("ijk")`: matches names that contain `"ijk"`.
+
+- `matches("(.)\\1")`: selects variables that match a *regular expression* (REGEX).
+  + This one matches any variables with two repeated characters, e.g., "YY".
+  + You'll learn more about regular expressions in the class on strings and stringr.
+
+- `num_range("x", 1:3)`: matches `x1`, `x2`, and `x3` for whatever numerical sequence you provide
+  + This can be useful for data sets with variables such as month1, month2, month3 ..., or FY18, FY19, FY20, ....
+
+- Example - select the variables for the different kinds of delays
+    ```{r, eval = FALSE}
+    flights %>%
+      select(ends_with("delay"))
+    ```
+
+- Example - select the variables for the different attributes for a departure for each year, month, and day   
+    ```{r, eval = FALSE}
+    flights %>%
+      select(starts_with("dep"), year, month, day)
+    ```
+
+
+### Exercise:
+
+1. Select all variables that have anything to do with the arrival. Also keep the `year`, `month`, and `day`. Use as few characters as possible in your `select()` call.
+
+    ```{r,  }
+    flights %>%
+      select(year:day, contains("arr_")) #What happens with just "arr"
+    ```
+
+2. Select all variables that do not contain the string "arr_".
+    ```{r,  }
+    flights %>%
+      select(!contains("arr_"))
+
+    flights %>%
+      select(-contains("arr_"))
+    ```
+2. Select all variables that contain the string "arr_" or "dep.
+    ```{r,  }
+    flights %>%
+      select(contains("arr_"), contains("dep"))
+    ```
+
+# `rename()`
+## Rename Columns (Variables)
+
+- Raw data often has column names that are either obtuse or non-standard so require quotes around them
+  e.g., "X_1247" or "1 week', "2 weeks", etc.
+- Use `rename()` to rename a variable so it is easier to work with and more transparent in your analysis.
+- The syntax is `rename(new_name = old_name)`
+- Read it as "assign the object currently assigned to the name `old_name` to the name `new_name` and delete the name `old_name`"
+
+    ```{r, eval = FALSE}
+    names(flights)
+    flights %>%
+      rename(departureTime = dep_time)
+    ```
+
+# `mutate()` and `transmutate()`
+
+## Create New Columns (Variables) or Redefine Existing Columns (Variables)
+
+- The variables we have are usually not enough for all the questions we want to look at in an analysis.
+  + We often use a `log()` function to transform positive data to reduce skew or try to make associations more linear.
+  + We also like to combine variables to create new attributes based on existing attributes.
+
+- We use `mutate()` to **create new variables from old** - adds one or more columns to our temporary data frame.
+- We will do this a lot!
+
+- Example of creating two new variables for gain in time and speed of the flight in miles per hour
+    ```{r, eval = FALSE}
+    flights %>%
+      mutate(gain = dep_delay - arr_delay,
+             speed <- distance / air_time * 60) %>%
+      select(year:day,gain, "speed <- distance/air_time * 60")
+
+    # Note: you can use the left arrow assignment operator `<-` but, ...
+    # it assigns the whole expression as the name
+    # Avoid doing so and use the `=` assignment operator instead
+    ```
+
+- You can also use `mutate()` to **redefine an existing variable** value by "overwriting" the variable of the same name with a new value.
+- Let's convert the distance variable from miles to kilometers
+    ```{r}
+    head(flights$distance)
+    flights %>%
+      mutate(distance = distance*1.60934) %>%  
+      select(distance) %>%
+      head()
+    ```
+
+- If you **only want to keep new variables, use `transmute()`** - all others are dropped - we will not do this much
+
+    ```{r}
+    flights %>%
+      transmute(gain = dep_delay - arr_delay,
+                hours = air_time / 60,
+                gain_per_hour = gain / hours)
+    ```
+
+- All of the operations so far have been temporary or ephemeral. We never changed the original data frame, only the data we were working with at the time in our "virtual" or temporary data frame.
+- **If you want to make a change permanent, you need to save the temporary data frame either to a new data frame or back to the original data frame.**
+- Example of a new data frame
+    ```{r}
+    flights %>%
+      mutate(distancek = distance*1.60934) ->
+      flights_k
+      head(flights)
+      head(flights_k)
+    ```
+
+
+### Exercise: (RDS 3.5.2.1)
+
+1. Currently `dep_time` and `sched_dep_time` are convenient to look at, but hard to work with because they're not really continuous numbers.
+- Convert them to a more convenient representation of number of minutes since midnight.
+- Hint: `%/%` is integer division and `%%` is remainder from division.
+- Save back to flights
+
+    ```{r,  }
+    head(flights$dep_time)
+    head(flights$sched_dep_time)
+    flights %>%
+      mutate(dep_h = dep_time %/% 100,
+             dep_m = dep_time %% 100,
+             dep_elapsed_min = dep_h * 60 + dep_m,
+             sched_dep_h = sched_dep_time %/% 100,
+             sched_dep_m = sched_dep_time %% 100,
+             sched_dep_elapsed_min = sched_dep_h * 60 + sched_dep_m) ->
+      flights
+
+    head(flights$sched_dep_time)
+    head(flights$sched_dep_elapsed_min)
+    ```
+
+## Background Discussion on Syntax for `select()` vs `mutate()`
+- Mutate semantics are quite different from selection semantics.
+- Whereas `select() `expects column names or positions, `mutate()` expects column vectors.
+- So, `select()` expects names of columns in quotes, e.g., `select(flights, c("carrier", "tailnum"))`
+- In `mutate()`, the names of the columns represent the entire column as a vector, so no quotes, e.g., `mutate(dep_h = dep_time %/% 100)`
+
+# `relocate()`
+## Change Column Order by Moving Columns to New Locations in the Data Frame
+- Uses a similar syntax as `select()` to move blocks of columns at once
+- Can use the tidyselect helpers to identify the columns you want to move
+- Use `.before=` and `.after=` to identify specific locations - default is leftmost
+    ```{r}
+    head(flights)
+    flights %>%
+      relocate(origin:dest)
+
+    flights %>%
+      relocate(starts_with("d"), .after = day)
+    ```
+
+### Exercise
+1.  Move the columns that end with the word "time" to be before `flight` and put the ones with "sched" before the actual times
+    ```{r, }
+    flights %>%
+      relocate(ends_with("time"), .before = flight) %>%
+      relocate(starts_with("sched"), .before = dep_time)  
+    ```
+
+2. Relocate all the character variables to the left side of the data frame
+    ```{r,  }
+    relocate(flights, is.character)
+    ```
+
+# `summarize()`
+
+## Summarize One or More Columns (Variables)
+
+- We create summary statistics for variables by using the `summarize()` function.
+- **Once you summarize, the data *not* being summarized is not included in the new data frame**  
+  + You are creating a temporary, summarized version of the data frame with usually fewer rows
+
+- The following calculates the mean departure delay time across all flights.
+
+    ```{r}
+    flights %>%
+      summarize(mean_del = mean(dep_delay, na.rm = TRUE))
+    ```
+
+- It's often useful to **calculate the number of items in a summary using `n()`**.
+
+    ```{r}
+    flights %>%
+      summarize(mean_del = mean(dep_delay, na.rm = TRUE), n())
+    ```
+
+- Summarizing two variables - note the removal of `NA`s inside the `mean()` function and adding `n()` to get the count.
+- Why are these two versions yielding different numbers?
+    ```{r}
+    flights %>%
+      summarize(mean_depdel = mean(dep_delay, na.rm = TRUE), mean_arrdel = mean(arr_delay, na.rm = TRUE),  n())
+    flights %>%
+      filter(!is.na(dep_delay), !is.na(arr_delay)) %>%
+      summarize(mean_depdel = mean(dep_delay), mean_arrdel = mean(arr_delay),  n())
+
+
+    flights %>%
+      filter(xor(is.na(dep_delay), is.na(arr_delay))) %>%
+      select(dep_delay, arr_delay) %>%
+      arrange(arr_delay)
+    ```
+    ### Exercise
+
+    1. What is the standard deviation of the departure delay time?
+
+        ```{r,  }
+        flights %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE))
+        ```
+
+    2. What is the maximum of the departure delay time for flights from JFK? from Newark? from LaGuardia
+
+        ```{r,  }
+        flights %>%
+          filter(origin == "JFK") %>%
+          summarize(max_del = max(dep_delay, na.rm = TRUE))
+
+        flights %>%
+          filter(origin == "EWR") %>%
+          summarize(max_del = max(dep_delay, na.rm = TRUE))
+
+        flights %>%
+          filter(origin == "LGA") %>%
+          summarize(max_del = max(dep_delay, na.rm = TRUE))
+        ```
+
+    # `group_by()`
+    ## Group Rows by Column Values to Create a (Virtual) Grouped Data Frame
+
+    - The previous exercise required us to run three different sets of code to get summaries for the three airports.
+    - `group_by` allows us to do that all at once by grouping the rows where the values in one of the columns,creates the groups e.g., `origin`creates three groups of rows, one for each value of airport.
+
+    - You can create a temporary grouped data frame using the `group_by()` function.
+    - You define the variables by which to group the observational units.
+    - Each unique combination of the values of the grouping variables will create a new group.
+    - Groups are *virtual* in the sense *you are not changing the structure of the original data frame, just how R perceives in subsequent operations* until an `ungroup()` is used.
+    - We will do this a lot!
+
+    - Create the following tibble using the `tribble()` function:
+        ```{r}
+        dfdat <- tribble(~x,  ~y,  ~z,
+                         "a", "c", 1,
+                         "a", "d", 2,
+                         "a", "c", 3,
+                         "a", "c", 4,
+                         "b", "c", 5,
+                         "b", "d", 6,
+                         "b", "c", 7)
+        dfdat
+        ```
+
+    - If we group by the variable `x`, then there are two groups:
+
+        i. Rows 1, 2, 3, 4 (corresponding to `"a"`)
+        ii. Rows 5, 6, 7 (corresponding to `"b"`)
+
+    - If we group by the variable `y` then there are also two groups:
+
+        i. Rows 1, 3, 4, 7, 5 (corresponding to `"c"`)
+        ii. Rows 2, 6 (corresponding to `"d"`)
+
+    - If we group by both `x` and `y` then we have four groups:
+
+        i. Rows 1, 3, 4 (corresponding to `"a"` and `"c"`)
+        ii. Row 1 (corresponding to `"a"` and `"d"`)
+        iii. Rows 5, 7 (corresponding to `"b"` and `"c"`)
+        iv. Row 6 (corresponding to `"b"` and `"d"`)
+
+        ```{r}
+        dfdat %>%
+          group_by(x) ->
+          grouped_dfdat
+
+        attributes(grouped_dfdat)
+        ```
+
+    ## Group Rows by Column Values to Enable Grouped Summaries
+    - The grouping function is often useful to calculate summaries within each group (or by each group).
+
+    - After a `group_by`, the `summarize()`, `filter()`, `arrange()` and `mutate()` functions can all operate on each group separately.
+    - `summarize()` gives you options for whether to keep the groups or drop one or more in the output structure.
+      + The default varies with the number of rows in the output but it will issue a message
+      + If you find the default message annoying, you can suppress by setting a global option: `options(dplyr.summarise.inform = FALSE)`
+      + It does not affect the results you see, only how they are perceived by R in terms of the level of grouping
+    - `arrange()` does not arrange by group by default
+
+    - Suppose we want to calculate the mean and standard deviation of the departure delays within each airport?
+
+        ```{r, eval = FALSE}
+        flights %>%
+          group_by(origin) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE))
+
+        flights %>%
+          group_by(origin) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE),
+                    .groups = "drop_last")
+
+         flights %>%
+          group_by(origin, dest) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE),
+                    .groups= "drop")
+        ```
+
+    - Or at a particular time of day within each airport:
+
+    - Suppose we want to calculate the mean and standard deviation of the departure delays within each airport by each hour?
+
+        ```{r, eval = FALSE}
+        flights %>%
+          group_by(origin, hour) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE))
+        ```
+
+    - We can save this output if we want and feed into ggplot2
+    - Here we are plotting our two new values and adding the third dimension with our categorical variable origin
+
+        ```{r}
+        flights %>%
+          group_by(origin, hour) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE)) ->
+          sumdf
+
+        ggplot(data = sumdf, mapping = aes(x = hour, y = mean_del, col = origin)) +
+          geom_line() +
+          theme_bw() +
+          xlab("Hour") +
+          ylab("Mean Delay Time") +
+          scale_color_discrete(name = "Origin")
+        ```
+    - If we don't need to save the data for other analysis, we can just pipe it directly to ggplot:
+        ```{r}
+        flights %>%
+          group_by(origin, hour) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE)) %>%
+        ggplot(aes(x = hour, y = mean_del, col = origin)) +
+          geom_line() +
+          theme_bw() +
+          xlab("Hour") +
+          ylab("Mean Delay Time") +
+          scale_color_discrete(name = "Origin")
+        ```
+
+    - When you are using `group_by()`, the `n()` function will count the number of observational units in each group.
+    - **It is a good idea to always include this function in the `summarize()` call.**
+    - It allows you to check if you are getting about the right amount of rows in each group
+
+        ```{r, eval = FALSE}
+        flights %>%
+          group_by(origin, hour) %>%
+          summarize(sd_del = sd(dep_delay, na.rm = TRUE),
+                    mean_del = mean(dep_delay, na.rm = TRUE),
+                    n = n())
+        ```
+
+    - `arrrange()` is a little different as it will ignore the grouping by default
+    -  Set the `.by_group = TRUE` argument to arrange within each group
+        ```{r}
+        flights %>%
+          group_by(day) %>%
+          arrange(dep_delay)
+
+        flights %>%
+          group_by(day) %>%
+          arrange(dep_delay, .by_group=TRUE) %>%
+          slice(1:5,20000:20005)
+
+        ```
+
+    ## Exercise
+
+    1. Plot the number and proportion of canceled flights per day.
+      - Is there a pattern?
+      - Is the proportion of canceled flights related to the average delay?
+      - Define a flight as canceled by `is.na(dep_delay) | is.na(arr_delay)`.
+
+        ```{r,  }
+        flights %>%
+          mutate(is_cancelled = is.na(dep_delay) | is.na(arr_delay)) %>% # add an indicator variable for delayed
+          group_by(day) %>%
+          summarize(prop_canc = mean(is_cancelled),
+                    tot_canc = sum(is_cancelled),
+                    n = n(),
+                    ave_delay = mean(dep_delay, na.rm = TRUE))  ->
+           sumdat
+
+        str(sumdat)
+
+        ggplot(sumdat, mapping = aes(x = day, y = prop_canc)) +
+          geom_point() +
+          theme_bw() +
+          xlab("Day Number") +
+          ylab("Proportion Cancelled") +
+          geom_smooth(se = FALSE, method = loess, method.args = list(span = 0.3))
+
+        # The proportion of delayed flights seems to peak on certain days of the month
+    ```
+
+
+        ```{r,  }
+        ggplot(sumdat, mapping = aes(x = day, y = tot_canc)) +
+          geom_point() +
+          theme_bw() +
+          xlab("Day Number") +
+          ylab("Total Cancelled") +
+          geom_smooth(se = FALSE, method = loess, method.args = list(span = 0.3))
+
+        ## The total also seems to peak on certain days
+
+
+        ggplot(data = sumdat, mapping = aes(x = ave_delay, y = prop_canc)) +
+          geom_point() +
+          theme_bw() +
+          xlab("Average Departure Delay") +
+          ylab("Proportion of Flights Cancelled") +
+          geom_smooth(se = FALSE, method = loess, )
+
+        sumdat %>%
+          mutate(logit_prop_canc = log(prop_canc / (1 - prop_canc))) %>%
+          ggplot(mapping = aes(x = ave_delay, y = logit_prop_canc)) +
+          geom_point() +
+          theme_bw() +
+          xlab("Average Departure Delay") +
+          ylab("Logit Proportion of Flights Cancelled") +
+          geom_smooth(se = FALSE, method = loess)
+
+        ## It seems as we increase the average delay, there is a higher
+        ## proportion of canceled flights. This relationship appears linear on the
+        ## logit scale.
+        ```
+
+    2. We saw earlier there were more carrier-tail number combinations than unique tail numbers. There are two reasons for this: The presence of flights with no tail numbers and planes changing carriers.
+    - Remove the rows with missing tail numbers
+    - For each tail number find the names of all of its carriers
+    - Create a new variable with the number of carriers for each tail number
+    - Show the list of tail numbers and their carriers for those tail numbers with more than one carrier in descending order of the number of carriers.
+    
+    ```{r,  }
+        flights %>%
+          filter(!is.na(tailnum)) %>%
+          group_by(tailnum) %>%
+          summarize(owners = unique(carrier)) %>%
+          mutate(num_owners = length(unique(owners))) %>%
+          filter(num_owners>1) %>%
+          arrange(desc(num_owners))
+
+    # 9E is Endeavor Air Inc and EV is ExpressJet Airlines Inc
+    # https://en.wikipedia.org/wiki/ExpressJet
+    #In August 2017, as United Airlines purchase talks gained momentum Delta Air Lines terminated its contract with ExpressJet, which took effect in late 2018. The fleet of CRJ-900 aircraft, which were owned by Delta and leased, were transferred to Endeavor Air.[19]
+
+    #American Airlines terminated their contract with ExpressJet in May 2018. As a result, ExpressJet ceased to operate American Eagle flights as of 2019.[20]
+
+    #On July 30, 2020, it was announced that United Airlines has decided to end its contract with ExpressJet and transfer these operations to fellow United Express affiliate CommutAir. CommutAir will become the sole operator of the United Express Embraer ERJ-145 fleet. [21]
+
+    #On August 24, 2020, it was announced, that ExpressJet will end operations on 30 September 2020.[22]
+    ```
+
+
+
+    # Part 1 Learning Outcomes Recap
+    - Describe data frames in R and tidyverse tibbles
+    - Use basic functions of dplyr to manipulate single data frames by rows, by columns (variables), and by groups
+      + Choose rows by column (variable) values `filter()`
+      + Choose rows by position: `slice()`
+      + Arrange (sort) rows by column (variable) values: `arrange()`
+      + Choose columns (variables) by names `select()`
+      + Rename columns (variables): `rename()`
+      + Add/modify new/existing columns (variables): `mutate()` or `transmute()`
+      + Group rows by columns (variables): `group_by()`
+      + Calculate summary statistics of Columns with or without grouping. `summarize()`, `group_by()`
+
+
+
+
+
+## References
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc.
+* [Chapter 5](https://r4ds.had.co.nz/)
+- [Data Transformation Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/data-transformation.pdf).
+- [dplyr Overview](https://dplyr.tidyverse.org/).

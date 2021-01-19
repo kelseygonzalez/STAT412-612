@@ -1,5 +1,34 @@
 h1:forcat-lubridate Factors and Dates with forcats and lubridate
 h2:lecture-notes Lecture Notes
+h3:factors Factors
+h4:introduction Introduction
+h4:example Example
+h4:factors-are-special-in-that-they-have-two-different-representations-of-their-levels Factors are special in that they have  different representations of their levels
+h4:be-careful-when-working-with-factor-data-as-results-may-be-counter-intuitive-at-first. Be careful when working with factor data as results may be counter-intuitive at first.
+h4:converting-factor-variables-with-numbers-as-levels-to-numeric-variables Converting Factor Variables with numbers as levels to Numeric Variables
+h3:creating-factors Creating Factors
+h4:readr-and-base-r-have-functions-to-create-factor-variables readr and base R have functions to create factor variables
+h4:working-with-factor-levels-and-their-order Working with factor levels and their order
+h3:the-tidyverse-forcats-package The tidyverse forcats Package
+h4:changing-the-order-of-the-levels Changing the Order of the Levels
+h5:exercises Exercises:
+h4:modify-the-labels-of-the-factor-levels Modify the Labels of the Factor Levels
+h5:exercise Exercise
+h4:other-useful-functions. Other Useful Functions.
+h3:the-lubridate-package The  Package
+h4:three-main-classes-for-datetime-data Three main classes for date/time data
+h3:parsing-dates-and-times Parsing Dates and Times
+h4:parsing-dates-and-times-using-readr Parsing Dates and Times using 
+h4:parsing-dates-and-times-using-lubridate Parsing Dates and Times Using 
+h5:exercises-1 Exercises:
+h3:creating-date-time-values-from-individual-components Creating Date-time values from individual components
+h4:other-uses-of-lubridate-functions Other Uses of lubridate Functions
+h3:doing-math-with-time Doing Math with Time
+h4:periods Periods
+h4:durations Durations
+h4:intervals Intervals
+h5:exercise-1 Exercise:
+h3:time-zones Time Zones
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

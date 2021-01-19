@@ -1,0 +1,287 @@
+---
+title: "Homework 2"
+author: "Your Name"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Q1
+```{r}
+
+
+```
+
+Q2
+```{r}
+
+```
+
+#  Implement a `fizzbuzz()` function 
+1. Create a new function which takes a single number as input. Use logicals and conditionals as well as the operator `%%` as required.  
+- Requirements
+  + If the input number is divisible by three, return `"fizz"`. 
+  + If it's divisible by five, return `"buzz"`. 
+  + If it's divisible by three *and* five, return `"fizzbuzz"`. 
+  + Otherwise, return the input number.   
+  
+a. Design your function. Write out in words in a text chunk the steps your function will need to accomplish in order to convert the input number into the required text or numeric output. 
+  
+  1.  
+  2.  
+  3. 
+  4. etc.*As many steps as you need*
+  
+b. Write R code in a code chunk to implement your steps using a variable `x`. Test it with x having values of of 3, 5, 15, and 16.
+
+
+c. Once the code is working, then copy it to a new code chunk and turn it into  function with input argument of `x`. 
+
+d. **Show your output for the following inputs**: `3`, `5`, `15`, `2`.
+
+    ```{r}
+    library(magrittr)
+    fizzbuzz <- function(x) {
+      is3 <- x %% 3 == 0
+      is5 <- x %% 5 == 0
+      if (is3 && is5) {
+        return("fizzbuzz")
+      } else if (is3) {
+        return("fizz")
+      } else if (is5) {
+        return("buzz")
+      } else {
+        return(x)
+      }
+    }
+    # Example why not to use print()
+     fizzbuzzp <- function(x) {
+      is3 <- x %% 3 == 0
+      is5 <- x %% 5 == 0
+      if (is3 && is5) {
+        return("fizzbuzz")
+      } else if (is3) {
+        return("fizz")
+      } else if (is5) {
+        return("buzz")
+      } else {
+        print(x)
+      }
+        }
+        x1 <- fizzbuzz(4)
+        x2 <- fizzbuzzp(4)
+```
+
+
+    ```{r}
+    fizzbuzz(3)
+    fizzbuzz(5)
+    fizzbuzz(15)
+    fizzbuzz(2)
+    ```
+
+e. Update your function to include error checking  
+- Ensure the input is both numeric and a single value - not a vector. 
+- Test it on `cat`, and `c(1,5)`. 
+- Remember, in the code chunk where you run the function, **set your code chunk parameter for error to be TRUE**, 
+  + e.g. `{r, error=TRUE}`, so it will knit with the error.
+    ```{r}
+    fizzbuzz <- function(x) {
+          stopifnot(is.numeric(x),length(x)==1)
+          is3 <- x %% 3 == 0
+          is5 <- x %% 5 == 0
+          if (is3 && is5) {
+            return("fizzbuzz")
+          } else if (is3) {
+            return("fizz")
+          } else if (is5) {
+            return("buzz")
+          } else {
+            return(x)
+          }
+        }
+    ```
+
+
+    ```{r, error=TRUE}
+    fizzbuzz("cat")
+    ```
+
+
+    ```{r,error=TRUE}
+    fizzbuzz(c(1,2))
+    ```
+
+f. Complete your function by inserting and completing Roxygen comments in the code chunk, above the function, to document the function.  
+- Include the following elements: title, description, usage or syntax, arguments ( the params), and return value. 
+```{r}
+
+#' Check divisibility of a number 
+#'
+#' fizzbuz takes an input numeric value and returns the value fizz if the input is 
+#' divisible by 3, buzz if the input is divisible by 5, fizzbuzz if the input is
+#' divisible by 3 and 5, or else the input number.
+#' usage fizzbuzz(x)
+#' @param x a single numeric value.
+#'
+#' @return a character value of fizz, buzz, or fizzbuzz, or,
+#' a numeric value of the input.
+#'
+#'
+#' @examples 
+#' fizzbuzz(3)
+#' fizzbuzz(5)
+#' fizzbuzz(2)
+fizzbuzz <- function(x) {
+      stopifnot(is.numeric(x),length(x)==1)
+      is3 <- x %% 3 == 0
+      is5 <- x %% 5 == 0
+      if (is3 && is5) {
+        return("fizzbuzz")
+      } else if (is3) {
+        return("fizz")
+      } else if (is5) {
+        return("buzz")
+      } else {
+        return(x)
+      } # end else block
+    } # end function
+```
+
+g. Create a script out of your `fizzbuzz()` function  
+- Copy and paste the code from your working function into a new .R file and save in the R directory with the file name fizzbuzz_s.R
+- Rename the function to fizzbuzz_s 
+- Use the following code in a code chunk to show your code
+  + `cat(readr::read_file("./R/fizzbuzz_s.R"))`
+  + Adjust the relative path as necessary
+- Write code in a new code chunk in your original homework file to source the `fizzbuzz_s()` function
+- Run the function in your homework .Rmd file to show the results with the values 35, 18, 45, and -1
+
+
+# Create a new `cut()` function  
+1. Write a function that uses the function `cut()` to simplify this set of nested if-else statements? 
+- Consider using `-Inf` and `Inf`. 
+- Note, this will also output the levels of the factors.
+
+  a. Show the output for inputs: `31`, `30`, `10`, `-10`.
+
+    ```{r, echo = TRUE, eval = FALSE}
+    if (temp <= 0) {
+      "freezing"
+    } else if (temp <= 10) {
+      "cold"
+    } else if (temp <= 20) {
+      "cool"
+    } else if (temp <= 30) {
+      "warm"
+    } else {
+      "hot"
+    }
+    ```
+    
+    ```{r}
+    cutright <- function(x) {
+      y <- cut(x = x, 
+          breaks = c(-Inf, 0, 10, 20, 30, Inf), 
+          labels = c("freezing", "cold", "cool", "warm", "hot"))
+      return(y)
+    }
+
+    cutright(31)
+    cutright(30)
+    cutright(10)
+    cutright(-10)
+    cutright(c(31, 30, 10, -10))
+    ```
+    
+  b. Look at help for `cut()`. Change the call to `cut()` to handle `<` instead of `<=` in the comparisons.  
+  
+  c. What is the other chief advantage of the `cut()` method for this problem? 
+    (Hint: what happens if you have many values in `temp`?)
+    
+    ```{r}
+    cutleft <- function(x) {
+      cut(x = x, 
+          breaks = c(-Inf, 0, 10, 20, 30, Inf), 
+          right = FALSE, 
+          labels = c("freezing", "cold", "cool", "warm", "hot"))
+    }
+    ```
+    
+    ```{block}
+    The chief advantage is the `cut()` method can handle a vector of inputs.
+    For example:
+    ```
+
+    ```{r}
+    cutright(c(31, 30, 10, -10))
+    ```
+
+# Using the Forward Pipe
+
+1. Using the forward pipe `%>%`,  
+- Sample from the vector `1:10` 1000 times **with replacement**, 
+- Calculate the resulting sampled vector's mean, then 
+- Exponentiate that mean.
+   
+    ```{r}
+    set.seed(1)
+    x <- 1:10
+    x %>% 
+    sample(size = 1000, replace = TRUE) %>%
+      mean() %>%
+      exp()
+    
+    # or
+    sample(x=1:10, size = 1000, replace = TRUE) %>%
+      mean() %>%
+      exp()
+    ```
+   
+# Calculate a proportion
+- Select a random sample of 100 normally distributed values with mean 10 and variance of 3. 
+- Calculate the proportion greater than 12.
+
+    ```{r}
+    set.seed(1)
+    rvec <- rnorm(100, mean = 10, sd = sqrt(3))
+    mean(rvec>12)
+    # or
+    set.seed(1)
+    (rnorm(100, mean = 10, sd = sqrt(3)) > 12) %>% 
+    mean()
+    ```
+  
+# Logical Comparisons and Subsetting
+
+- Create the values:   
+  + x <- c(TRUE, FALSE, TRUE, TRUE)
+  + y <- c(FALSE, FALSE, TRUE, FALSE)
+  + z <- NA
+- What are the results of the following:  
+  + x & y
+  + x & z
+  + !(x | y)
+  + x | y
+  + y | z
+  + x[y]
+  + y[x]
+  + x[x|y]
+  
+```{r}
+ x <- c(TRUE, FALSE, TRUE, TRUE) 
+ y <- c(FALSE, FALSE, TRUE, FALSE)
+ z <- NA
+ 
+x & y
+x & z
+!(x | y)
+x | y
+y | z
+x[y]
+y[x]
+x[x|y]
+```

@@ -1,5 +1,23 @@
 h1:purrr Loops and Purrr
 h2:lecture-notes Lecture Notes
+h3:for-loops-in-base-r For-Loops in Base R
+h4:motivation Motivation
+h4:for-loop-structure For-Loop Structure
+h5:group-exercise Group Exercise
+h4:looping-over-the-columns-of-a-data-frame. Looping Over the Columns of a data frame.
+h5:exercise Exercise
+h4:the-while-function-as-an-alternative The  function as an alternative
+h3:using-the-purrr-package-for-iteration Using the  package for iteration
+h4:intro-to-the-purrr-package Intro to the purrr package
+h4:the-purrr-map-functions The  map functions
+h5:exercise-1 Exercise
+h4:why-use-purrr Why Use purrr?
+h4:using-formula-style-for-.f-as-a-shortcut-around-anonymous-functions Using Formula Style for  as a Shortcut around Anonymous Functions
+h5:exercise-2 Exercise
+h4:map2-and-pmap-allow-mapping-over-multiple-arguments-in-parallel  and  allow mapping over multiple arguments in parallel
+h3:other-purrr-functions Other Purrr Functions
+h4:keep-and-discard-select-with-logicals  and  Select with Logicals
+h5:exercise-3 Exercise
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

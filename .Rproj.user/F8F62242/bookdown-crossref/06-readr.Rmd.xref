@@ -1,5 +1,36 @@
 h1:readr Data Import with readr and EDA
 h2:lecture-notes Lecture Notes
+h3:contemplating-the-nirvana-of-relative-paths---a-review Contemplating the Nirvana of Relative Paths - a Review
+h4:computers-store-files-in-a-tree-like-structure Computers Store Files in a Tree-like Structure
+h4:absolute-paths-are-antithetical-to-the-concept-of-reproducibility-of-our-work Absolute Paths are Antithetical to the Concept of Reproducibility of Our Work
+h3:working-directories Working Directories
+h4:the-working-directory-for-a-file The Working Directory for a File
+h4:the-rstudio-console-working-directory The RStudio Console Working Directory
+h4:using-relative-paths Using Relative Paths
+h3:default-path default path
+h4:parse-functions-and-problemsread_in-data Parse functions and 
+h3:data-export Data Export
+h4:write_csv-write_csv2-and-write_tsv , , and 
+h3:readingwriting-r-objects-with-readrds-and-saverds. Reading/Writing R Objects with  and .
+h5:eda EDA
+h3:introduction Introduction
+h3:general-strategies General Strategies
+h3:distribution-of-every-variable Distribution of Every Variable:
+h4:categorical-variable-bar-chart-geom_bar-andor-table-then-prop.table Categorical Variable: Bar chart () and/or  then 
+h4:quantitative-variable-use-a-histogram-geom_histopgram-or-density-plot-geom_demsity Quantitative Variable: Use a histogram () or density plot ()
+h4:looking-at-multiple-variables-at-once-histograms-density-plots-and-frequency-plots Looking at Multiple Variables at once: Histograms, Density Plots, and Frequency Plots
+h3:bi-variate-distribution-of-every-pair-of-variables Bi-variate Distribution of Every Pair of Variables
+h4:quantitative-vs-quantitative-use-a-scatterplot-geom_point Quantitative vs Quantitative: Use a scatterplot 
+h4:categorical-vs-quantitative-use-a-boxplot-geom_boxplot Categorical vs Quantitative: Use a boxplot 
+h4:categorical-vs-categorical-use-a-mosaic-plot-or-a-count-plot Categorical vs Categorical: Use a mosaic plot or a count plot
+h4:mosaic-plots-ggmosaicgeom_mosaic Mosaic Plots 
+h5:adding-a-conditional Adding a conditional
+h5:test-results Test Results
+h5:so-why-the-different-test-results-at-the-university-level-and-the-department-level So why the different test results at the University level and the Department Level?
+h3:a-pairs-plot-provides-multiple-bivariate-plots-at-once-ggallyggpairs A Pairs Plot Provides Multiple Bivariate Plots at Once: 
+h3:patterns-and-outliers Patterns and Outliers
+h4:patterns Patterns
+h4:outliers Outliers
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

@@ -1,0 +1,22 @@
+---
+title: "Homework 2"
+author: "Your Name"
+date: '`r format(Sys.Date(), "%B %d, %Y")`'
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Q1
+```{r}
+
+
+```
+
+Q2
+```{r}
+
+```
+

@@ -1,0 +1,450 @@
+---
+title: 'STAT 412/612 Class 19: Dates with `lubridate`'
+author: "Kelsey Gonzalez"
+date: "4/1/2021"
+titlegraphic: "images/AU-Logo-on-white-small.png"
+output: 
+  pdf_document:
+   toc: true
+    number_sections:  true
+  html_document: default
+
+urlcolor: "blue"
+header-includes:
+- \usepackage{fancyhdr}
+- \usepackage{lipsum}
+- \pagestyle{fancy}
+- \fancyhead[R]{\includegraphics{../AU-Logo-on-white-small.png}}
+- \fancyhead[L]{WK2-Homework}
+- \fancyfoot[L]{STAT 412/612}
+- \fancyfoot[C]{\thepage}
+- \fancypagestyle{plain}{\pagestyle{fancy}}
+- \headheight=30pt
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = TRUE,
+                      echo = TRUE,
+                      message = FALSE, 
+                      warning = FALSE)
+```
+
+ 
+![](images/lubridate.png)
+
+#Dates with `lubridate`
+Learning Outcomes
+
+- Manipulate dates and times using the `lubridate` package.
+
+### The `lubridate` Package
+
+- The lubridate package has many functions to simplify working with dates and times.  
+- The lubridate package is **not** a part of the tidyverse so you need to load it separately.
+    + Install the package if needed (using the console).
+  
+    ```{r, message=FALSE, warning=FALSE}
+    library(tidyverse)
+    library(lubridate)
+    ```
+  
+#### Three main classes for date/time data
+
+1. `Date` for just the date.  
+2. `POSIXct` for both the date and the time (with Time Zone). 
+    + "POSIXct" stands for "Portable Operating System Interface - Calendar Time". It is a part of a [standardized system](https://en.wikipedia.org/wiki/Unix_time) (based on UNIX) of representing time across many computing computing platforms.  
+3. `hms` from the `hms` R package for just the time. "hms" stands for "hours, minutes, and seconds."
+  
+- `today()` gives the current date in the `Date` class. 
+    ```{r}
+    today()
+    class(today())
+    ```
+
+- `now()` gives the current date-time in the `POSIXct` class.
+    ```{r}
+    now()
+    class(now())
+    ```
+    
+- There is no built-in R function to find the current time without the date. 
+  + Use `hms::as_hms(now())` to get the current time.
+
+    ```{r}
+    hms::as_hms(now())
+    class(hms::as_hms(now()))
+    ```
+
+### Parsing Dates and Times
+
+#### Parsing Dates and Times using `readr`
+
+- You may recall the `readr` functions `parse_date()`, `parse_datetime()`, and `parse_time()` parse a date/date-time/time from a string *with a format you specify*.
+
+    ```{r}
+    x <- parse_date("10/11/2020", format = "%m/%d/%Y")
+    x
+    class(x)
+    
+    y <- parse_datetime("10/11/2020 11:59:20", format = "%m/%d/%Y %H:%M:%S")
+    y
+    class(y)
+    
+    z <- parse_time("11:59:20", "%H:%M:%S")
+    z
+    class(z)
+    ```
+    
+#### Parsing Dates and Times Using `lubridate`
+
+- `lubridate` has many "helper" functions which parse dates/times more automatically. 
+- The helper *function name specifies the order of the components*: year, month, day, hours, minutes, and seconds. 
+- The help page for `ymd` shows multiple functions to parse **dates** with different sequences of **y**ear, **m**onth and **d**ay, 
+    ```{r, eval = FALSE}
+    help(ymd)
+    ```
+
+- Only the order of year, month, and day matters
+    ```{r}
+    ymd(c("2011/01-10", "2011-01/10", "20110110"))
+    mdy(c("01/10/2011", "01 adsl; 10 df 2011", "January 10, 2011"))
+    ```
+
+- The help page for `mds` shows multiple functions to parse **times** 
+    ```{r}
+    help(ms)
+    ```
+    
+-  Only the order of hours, minutes, and seconds matter
+    ```{r}
+    hms(c("10:40:10", "10 40 10"))
+    ```
+    
+- Note: `ms()`, `hm()`, and `hms()` don't recognize "`-`" as a separator because they treat it as negative time. So use `parse_time()` here.
+    ```{r}
+    ms("10-10")
+    ```
+
+- The help page for `ymd_hms` shows multiple functions to parse **date-times**. 
+    ```{r}
+    help(ymd_hms)
+    ```
+
+##### Exercises: 
+
+1. Parse the following date-times.
+
+    ```{r, eval = FALSE}
+    "05/26/2004 UTC 11:11:11.444"
+    "26 2004 05 UTC 11/11/11.444"
+    ```
+    
+    ```{r,  }
+    mdy_hms("05/26/2004 UTC 11:11:11.444")
+    
+    ## No dym_hms() function is defined, so need to use parse_datetime()
+    parse_datetime("26 2004 05 UTC 11/11/11.444", "%d %Y %m UTC %H/%M/%S")
+    ```
+    
+2. (RDS 16.2.4.3): Use the appropriate lubridate function to parse the following dates:
+
+    ```{r}
+    d1 <- "January 1, 2010"
+    d2 <- "2015-Mar-07"
+    d3 <- "06-Jun-2017"
+    d4 <- c("August 19 (2015)", "July 1 (2015)")
+    d5 <- "12/30/14" # Dec 30, 2014 
+    ```
+
+    ```{r,  }
+    mdy(d1)
+    ymd(d2)
+    dmy(d3)
+    mdy(d4)
+    mdy(d5)
+    ```
+
+### Creating Date-time values from individual components
+
+- Use `make_date()` or `make_datetime()` to create dates and date-times if you have a vector of years, months, days, hours, minutes, or seconds.
+  
+    ```{r}
+    make_date(year = 1981, month = 6, day = 25)
+    make_datetime(year = 1972, month = 2, day = 22, hour = 10, min = 9, sec = 01)
+    ```
+
+- nycflights13 example:
+    ```{r}
+    library(nycflights13)
+    data("flights")
+    head(flights)
+```
+
+- You can see variables for the year, month, day, hour, and minute of the scheduled departure time
+    ```{r}
+      flights %>%
+       mutate(datetime = make_datetime(year   = year, 
+                                      month  = month, 
+                                      day    = day,
+                                      hour   = hour,
+                                      min = minute)) ->
+      flights
+      select(flights, datetime)
+    ```
+    
+- Having it in the date-time format makes it easier to plot.
+    ```{r}
+    ggplot(flights, aes(x = datetime)) +
+      geom_freqpoly(bins = 365)
+    ```
+
+- It also makes it easier to filter by date using`as_date()` and `ymd`
+    ```{r}
+    flights %>%
+      filter(as_date(datetime) == ymd(20130704)) %>%
+      ggplot(aes(x = datetime)) +
+      geom_freqpoly(binwidth = 600)
+    ```
+
+#### Use `as_date()` and `as_datetime()` to coerce objects to dates/times
+
+- I used `as_date()` in the previous example. This function will *try* to coerce an object to a date. Sometimes successfully! It is particularly useful for extracting the date component of a `POSIXct` object.
+
+- `as_datetime()` tries to coerce an object to a `POSIXct` object.  
+
+##### Exercise: 
+
+1. Create a date variable from the following data frame. 
+- Then filter out all rows before Feb 1, 2010. 
+- If you finish early, try to repeat by converting the month variable to a numeric representation of the month without using `month_num().
+  
+    ```{r, eval = FALSE, echo = TRUE}
+    fake <- tribble(~year, ~month, ~day, ~month_num,
+                    ##----/-------/----------------
+                    2018,  "Oct",  1,    10,
+                    2011,  "Nov",  2,    11,
+                    2019,  "Dec",  3,    12,
+                    2010,  "JAN",  5,     1,
+                    1999,  "MAr",  1,     3,
+                    1987,  "ApR",  3,     4,
+                    2020,  "maY",  2,     5,
+                    2010,  "May",  4,     5)  
+    ```
+    
+    ```{r, , eval = FALSE}
+    str(fake)
+    fake %>%
+      mutate(date = make_date(year = year, month = month_num, day = day)) %>%
+      filter(date > ymd(20100201))
+    
+    fake %>%
+      mutate(month = str_to_sentence(month), #clean up months
+             month = parse_factor(month, levels = month.abb), #convert to factor
+             month = as.numeric(month), # use numeric coding of the factor level
+             date = make_date(year = year, month = month, day = day)) %>%
+      filter(date > ymd(20100201))
+    ```
+    
+
+### `lubridate` has Functions for Getting/Setting Components of a date-time
+
+#### Getting or extracting the component of a date-time
+
+- `year()` extracts the year.
+- `month()` extracts the month.
+- `week()` extracts the week.
+- `mday()` extracts the day of the month (1, 2, 3, ...).
+- `wday()` extracts the day of the week (Saturday, Sunday, Monday ...).
+- `yday()` extracts the day of the year (1, 2, 3, ...)
+- `hour()` extracts the hour.
+- `minute()` extract the minute.
+- `second()` extracts the second.
+
+    ```{r}
+    ddat <- mdy_hms("01/02/1970 03:51:44")
+    ddat
+    year(ddat)
+    month(ddat, label = TRUE)
+    week(ddat)
+    mday(ddat)
+    wday(ddat, label = TRUE)
+    yday(ddat)
+    hour(ddat)
+    minute(ddat)
+    second(ddat)
+    ```
+
+
+##### Exercise: 
+- Load the `wmata_ridership` data frame into R from  <https://dcgerard.github.io/stat_412_612/data/wmata_ridership.csv>. 
+  + Create variables for year, month, and weekday (with labels).
+  + Exclude any data from 2004. 
+  + For each year and month, calculate the proportion of total monthly rides made on each day of the month (1 to 31). 
+  + Make box plots of the distribution of the daily proportions of ridership vs day of the weak.
+  
+    ```{r, eval = FALSE, }
+    #wmata <- read_csv("./data/wmata_ridership.csv")
+    wmata <- read_csv("https://dcgerard.github.io/stat_412_612/data/wmata_ridership.csv")
+    #
+   glimpse(wmata)
+```
+
+    ```{r, eval = FALSE }
+    wmata %>%
+      mutate(year = year(Date),
+             month = month(Date),
+             day  = wday(Date, label = TRUE)) %>% 
+      filter(year != 2004) %>%
+      group_by(year, month) %>%
+      mutate(prop = Total / sum(Total)) %>%
+      ungroup() %>%  #view()
+      ggplot(aes(x = day, y = prop)) +
+        geom_boxplot() +
+        theme_bw()
+    ```
+
+#### Other Uses of lubridate Functions
+- You can overwrite individual components.
+
+    ```{r}
+    ddat <- mdy_hms("01/02/1970 03:51:44")
+    ddat
+    year(ddat) <- 1988
+    ddat
+    ```
+    
+- You can round components
+
+    ```{r}
+    ddat <- mdy_hms("01/02/1970 03:51:44")
+    ddat
+    round_date(ddat, unit = "year")
+    ```
+
+  
+### Doing Math with Time
+- Humans manipulate "clock time" with the use of policies such as [Daylight Savings Time](https://en.wikipedia.org/wiki/Daylight_saving_time) which creates irregularities in the "physical time".
+- lubridate provides three classes of time spans to facilitate math with dates and date-times
+  + **Periods**: track changes in "clock time", and *ignore irregularities* in "physical time".
+  + **Durations**: track the passage of "physical time", which deviates from "clock time" when irregularities occur.
+  + **Intervals**: represent specific spans of the timeline, bounded by start and end date-times.
+
+#### Periods
+- Make a period with the name of a time unit pluralized, e.g.
+```{r}
+p <- months(3) + days(12)
+p
+str(p)
+```
+
+- You can also use `as.period()` to coerce an object to a period
+- Add or subtract periods to model events that happen at specific clock times, like the NYSE opening bell.
+
+```{r}
+p + months(2)
+```
+- You can read more about periods with
+    ```{r, eval = FALSE}
+    help("Period-class")
+    ```
+
+#### Durations
+
+- Durations are stored as seconds, the only time unit with a consistent length.  
+- Add or subtract durations to model *physical processes*, like travel or lifespan. 
+- You can create durations from years with `dyears()`, from days with `ddays()`, etc...
+    ```{r}
+    dyears(1)
+    ddays(1)
+    dhours(1)
+    dminutes(1)
+    dseconds(1)
+    ```
+- You can also use `duration(quantity, units = ...)` to create a duration or `as.duration()` to coerce an object to a duration
+- You can read about durations using
+    ```{r, eval = FALSE}
+    help("Duration-class")
+    ```
+
+- Example: We can find out the exact age for [UN Secretary General Antonio Guterres](https://en.wikipedia.org/wiki/Ant%C3%B3nio_Guterres) using durations
+    ```{r}
+    d1 <- ymd(19490430)
+    d2 <- today()
+    str(d1)
+
+    d2-d1
+    str(d2-d1)
+    as.duration(d2 - d1)
+    str(as.duration(d2 - d1))
+    ```
+- You can add durations to date-times, but since it measures physical time, *you are always adding seconds* 
+- If there is daylight savings time change you get weird results (add a day but the time is not the same as the time the previous day).
+  
+    ```{r}
+    one_pm <- ymd_hms("2016-03-12 13:00:00", tz = "America/New_York")
+    one_pm
+    one_pm + ddays(1)
+    ```
+- Adding a `period` takes into account daylight savings.
+    ```{r}
+    one_pm
+    one_pm + days(1)
+    ```
+
+#### Intervals
+- Intervals are like durations, but they also have an associated start time. 
+- Divide an interval by a duration to determine its **physical length**, 
+- Divide an interval by a period to determine its **implied length** in clock time.
+- Make an interval with `interval(start_date, end_date)`
+  + If the start_date occurs before the end_date, the interval will be positive. Otherwise, it will be negative. 
+- There are several functions for manipulating intervals or comparing them.
+- You can read more about intervals with
+    ```{r, eval = FALSE}
+    help("Interval-class")
+    ```
+    
+##### Exercise: 
+- How long of a time-span is covered in the WMATA ridership dataset?
+- Find as a duration and as an interval.
+- Hint: Use `range()` to find the max and min
+  
+    ```{r,  }
+    wmata <- read_csv("./data/wmata_ridership.csv")
+    rng <- range(wmata$Date)
+    as.duration(rng[2] - rng[1])
+    as.interval(rng[2] - rng[1], start = rng[1]) / years(1)
+    ```
+    
+### Time Zones
+
+- Time zones are specified using the `tz` or `tzone` arguments (for example, in the call to `ymd_hms()` above).
+- Time zones are specified by "content/city." For example, `"America/New_York"` and `"Europe_Paris"`
+  
+- You can see a complete list of over 600 time zones with `OlsonNames()`.
+- But all values in a vector can only have one same time zone.
+- The default time zone is `UTC` (which has no daylight savings). See [UTC](https://en.wikipedia.org/wiki/Coordinated_Universal_Time)
+
+- You usually don't have to worry about timezones unless you loaded them in incorrectly. 
+- For example, R might think it's `UTC` even though it should be `America/New_York` and then forget daylight savings.
+  
+- If a date-time is labeled with the incorrect time zone, use `force_tz()`.
+
+    ```{r}
+    d1 <- ymd_hms("20140101 10:01:11")
+    d1
+    force_tz(d1, tzone = "America/New_York")
+    ```
+
+- If the timezone is correct, but you want to change it, use `with_tz()`.
+  
+    ```{r}
+    with_tz(d1, tzone = "America/New_York")
+    ```
+
+
+## References 
+Wickham and Grolemund. 2016. _R for data science_ O'Reilly Media, Inc. 
+* [Chapter 16](https://r4ds.had.co.nz/workflow-projects.html)
+  - [Dates and Times Cheat Sheet](https://github.com/rstudio/cheatsheets/blob/master/lubridate.pdf).
+  - [Lubridate Overview](https://lubridate.tidyverse.org/).
+  

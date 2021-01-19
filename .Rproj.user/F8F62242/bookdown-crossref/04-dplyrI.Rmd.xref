@@ -1,6 +1,45 @@
 h1:part-data-wrangling (PART) Data Wrangling
 h1:dplyrI Data Transformation with dplyr I
 h2:lecture-notes Lecture Notes
+h1:introduction-to-the-dplyrpackage Introduction to the package
+h2:background-on-data-frames-and-tibbles Background on Data Frames and Tibbles
+h3:data-frames Data Frames
+h3:tibbles Tibbles
+h2:the-dplyr-package The dplyr Package
+h2:dplyr-functions-support-common-manipulationstransformationsoperations-on-data-and-data-frames dplyr Functions Support Common Manipulations/Transformations/Operations on Data and Data Frames
+h2:an-example-of-dplyr-operations-with-the-nycflights13-package-and-its-flights-data-frame An Example of dplyr Operations with the  Package and its  Data Frame
+h1:filter 
+h2:choose-rows-based-on-values-of-certain-variables Choose Rows Based on Values of Certain Variables
+h2:filter-on-two-or-more-variables-by-using-logical-operators.  on Two or More Variables by using Logical Operators.
+h3:exercises Exercises
+h2:missing-values Missing Values
+h2:near 
+h1:slice 
+h2:choose-rows-based-on-their-position-in-the-data-frame Choose Rows based on their Position in the Data Frame
+h2:choose-rows-from-the-top-or-the-bottom-of-the-data-frame Choose Rows from the Top or the Bottom of the Data Frame
+h3:exercises-1 Exercises
+h2:choose-rows-based-on-a-random-sample Choose Rows Based on a Random Sample
+h2:choose-rows-based-on-their-values-relative-to-the-max-or-min-of-the-data-frame Choose Rows Based on their Values Relative to the Max or Min of the Data Frame
+h3:exercises-2 Exercises
+h1:arrange 
+h2:rearrange-the-order-of-the-rows Rearrange the Order of the Rows
+h3:exercises-3 Exercises
+h1:select 
+h2:choose-specific-columns Choose Specific Columns
+h3:exercise Exercise
+h2:helper-functions-for-select Helper Functions for 
+h3:exercise-1 Exercise:
+h1:rename 
+h2:rename-columns-variables Rename Columns (Variables)
+h1:mutate-and-transmutate  and 
+h2:create-new-columns-variables-or-redefine-existing-columns-variables Create New Columns (Variables) or Redefine Existing Columns (Variables)
+h3:exercise-rds-3.5.2.1 Exercise: (RDS 3.5.2.1)
+h2:background-discussion-on-syntax-for-select-vs-mutate Background Discussion on Syntax for  vs 
+h1:relocate 
+h2:change-column-order-by-moving-columns-to-new-locations-in-the-data-frame Change Column Order by Moving Columns to New Locations in the Data Frame
+h3:exercise-2 Exercise
+h1:summarize 
+h2:summarize-one-or-more-columns-variables Summarize One or More Columns (Variables)
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab

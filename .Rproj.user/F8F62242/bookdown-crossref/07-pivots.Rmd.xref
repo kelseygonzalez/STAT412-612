@@ -1,5 +1,27 @@
 h1:pivots Tidying data with tidyr
 h2:lecture-notes Lecture Notes
+h3:tidy-data Tidy Data
+h4:definition-of-tidy-data Definition of Tidy Data
+h4:the-tidyr-package-is-for-tidying-or-reshaping-data The tidyr package is for Tidying or Reshaping Data
+h4:examples-of-tidy-and-untidy-data Examples of tidy and untidy data
+h4:why-tidy-data Why Tidy Data
+h3:reshaping-with-pivot_longer-replaces-gather Reshaping with  (Replaces )
+h4:problem-one-attribute-implied-variable-appears-in-multiple-columns. Problem: One Attribute (implied variable) Appears In Multiple Columns.
+h4:solution-pivot_longer-to-convert-columns-to-rows-i.e.-make-the-data-set-longer Solution:  to Convert Columns to Rows i.e., Make the Data Set Longer
+h5:exercises Exercises
+h4:other-arguments-see-help Other Arguments (see help)
+h3:reshaping-with-pivot_wider-replaces-spread Reshaping with  (replaces )
+h4:problem-one-observations-attributes-appear-in-multiple-rows. Problem: One Observation’s Attributes Appear in Multiple rows.
+h4:solution-pivot_wider-to-convert-rows-to-columns-i.e.-make-the-data-set-wider Solution:  to Convert Rows to Columns, i.e., Make the Data Set Wider
+h5:exercises-1 Exercises:
+h3:separate-combined-data-values  Combined Data Values
+h4:problem-one-column-contains-values-from-two-or-more-variables-in-each-row. Problem: One Column Contains Values from Two (or more) Variables in Each Row.
+h4:solution-separate Solution: 
+h5:exercise Exercise
+h3:unite-values-from-multiple-columns-to-create-a-new-variable  Values from Multiple Columns to Create a New Variable
+h4:problem-one-variable-spread-across-mmltiple-columns. Problem: One Variable Spread Across mMltiple Columns.
+h4:solution-unite-multiple-columns-to-create-a-new-variable Solution:  Multiple Columns to Create a New Variable
+h5:exercises-2 Exercises
 h2:lecture-code Lecture Code
 h2:references References
 h2:lab Lab
